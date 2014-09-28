@@ -74,20 +74,22 @@ public abstract class CompositeMatcher <T> extends TypeSafeMatcher<T> {
 
 
     // TODO: вынести в отдельный класс
-    private static Field findFieldInObjectRecursively(Object root, Object o) {
-        for (Field field : root.getClass().getFields()) {
-            if (!field.getType().isPrimitive()) {
-                field.setAccessible(true);
-                if (field.get(root) == o) {  // сравниваем указатели, без .equals
-                    return field;
-                }
-                if (field.getType().isArray()) {
-
-                }
-            }
-        }
-        return null;
-    }
+    // TODO: два метода получения имени: прокси на PowerMock для методов и поиск по полям для полей
+    // Ограничения: примитивные типы и методы после полей
+//    private static Field findFieldInObjectRecursively(Object root, Object o) {
+//        for (Field field : root.getClass().getFields()) {
+//            if (!field.getType().isPrimitive()) {
+//                field.setAccessible(true);
+//                if (field.get(root) == o) {  // сравниваем указатели, без .equals
+//                    return field;
+//                }
+//                if (field.getType().isArray()) {
+//
+//                }
+//            }
+//        }
+//        return null;
+//    }
 
     private static <U> Check<U> makeCheck(String objectDescription, U actual, Matcher<? super U> matcher) {
         Check<U> check = new Check<U>();

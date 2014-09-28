@@ -12,7 +12,7 @@ import static org.junit.Assert.assertThat;
 
 public class MatcherDescriptionFieldTest {
     @Test
-    public void matcherDescriptionFieldInChecksShouldBeCorrect() {
+    public void shouldBeCorrect() {
         assertThat(getMatcherDescription(simpleBeanMatcher(1, "1"), new SimpleBean(2, "2")), contains("is <1>", "is \"1\""));
     }
 }

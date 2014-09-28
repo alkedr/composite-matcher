@@ -10,7 +10,7 @@ import static org.junit.Assert.assertThat;
 
 public class ActualValueFieldTest {
     @Test
-    public void actualValueFieldInChecksShouldBeCorrect() {
+    public void shouldBeCorrect() {
         assertThat(getActualValue(simpleBeanMatcher(1, "1"), new SimpleBean(2, "2")), Matchers.<Object>contains(2, "2"));
     }
 }

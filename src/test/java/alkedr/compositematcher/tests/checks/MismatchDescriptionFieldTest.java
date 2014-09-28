@@ -16,12 +16,12 @@ import static org.junit.Assert.assertThat;
  */
 public class MismatchDescriptionFieldTest {
     @Test
-    public void matcherDescriptionFieldInChecksShouldBeNullWhenChecksPass() {
+    public void shouldBeNullWhenChecksPass() {
         assertThat(getMismatchDescription(simpleBeanMatcher(1, "1"), new SimpleBean(1, "1")), contains(nullValue(), nullValue()));
     }
 
     @Test
-    public void matcherDescriptionFieldInChecksShouldBeCorrectWhenChecksFail() {
+    public void shouldBeCorrectWhenChecksFail() {
         assertThat(getMismatchDescription(simpleBeanMatcher(1, "1"), new SimpleBean(2, "2")), contains("was <2>", "was \"2\""));
     }
 }
