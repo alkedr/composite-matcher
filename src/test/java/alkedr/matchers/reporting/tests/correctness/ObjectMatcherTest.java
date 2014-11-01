@@ -13,10 +13,10 @@ public class ObjectMatcherTest {
     private final ObjectWithPropertiesOfDifferentTypes on = Lambda.on(ObjectWithPropertiesOfDifferentTypes.class);
     private final Matcher<ObjectWithPropertiesOfDifferentTypes> matcher =
             new ObjectMatcher<ObjectWithPropertiesOfDifferentTypes>()
-                    .property("booleanPropertyWithFancyName", on.getBooleanProperty(), is(true))
-                    .property(on.getIntProperty(), is(1))
-                    .property("longPropertyWithFancyName", on.getLongProperty(), 2L)
-                    .property(on.getStringProperty(), "3")
+                    .property("booleanPropertyWithFancyName", on.getBooleanProperty()).is(true)
+                    .property(on.getIntProperty()).is(1)
+                    .property("longPropertyWithFancyName", on.getLongProperty()).is(2L)
+                    .property(on.getStringProperty()).is("3")
             ;
 
 

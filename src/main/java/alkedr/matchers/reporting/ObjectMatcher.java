@@ -12,58 +12,90 @@ import static org.hamcrest.Matchers.any;
 import static org.hamcrest.Matchers.equalTo;
 
 public class ObjectMatcher<T> extends ReportingMatcher<T, ObjectMatcher<T>> {
-    public <U> ObjectMatcher<T> property(String fieldNameForReport, U lambdajGetterMethodSelector, Matcher<? super U> matcher) {
-        return field(new LambdajMethodSelectorCheckExtractor<T, U>(fieldNameForReport, lambdajGetterMethodSelector, matcher));
+
+    public <U> PropertyCheckAdder<U> property(String fieldNameForReport, U lambdajGetterMethodSelector) {
+        return new PropertyCheckAdder<>(fieldNameForReport, lambdajGetterMethodSelector);
     }
 
-    public <U> ObjectMatcher<T> property(U lambdajGetterMethodSelector, Matcher<? super U> matcher) {
+    public <U> PropertyCheckAdder<U> property(U lambdajGetterMethodSelector) {
         Argument<U> argument = actualArgument(lambdajGetterMethodSelector);
-        return property(argument.getInkvokedPropertyName(), lambdajGetterMethodSelector, matcher);
-    }
-
-    public <U2, U1 extends U2> ObjectMatcher<T> property(String fieldNameForReport, U1 lambdajGetterMethodSelector, U2 expectedValue) {
-        return property(fieldNameForReport, lambdajGetterMethodSelector, equalTo(expectedValue));
-    }
-
-    public <U2, U1 extends U2> ObjectMatcher<T> property(U1 lambdajGetterMethodSelector, U2 expectedValue) {
-        return property(lambdajGetterMethodSelector, equalTo(expectedValue));
+        return property(argument.getInkvokedPropertyName(), lambdajGetterMethodSelector);
     }
 
 
-    public ObjectMatcher<T> fieldsWithoutGetters(Matcher<String> fieldNameMatcher, Matcher<? super Object> valueMatcher) {
-        return field(new FieldNameMatcherCheckExtractor<T>(fieldNameMatcher, valueMatcher));
+    public FieldsCheckAdder fieldsWithoutGetters(Matcher<String> fieldNameMatcher) {
+        return new FieldsCheckAdder(fieldNameMatcher);
     }
 
 
-    public <U> ObjectMatcher<T> fieldWithoutGetter(String fieldNameForReport, String fieldNameForValueExtraction,
-                                                   Matcher<? super U> valueMatcher) {
-        return field(new FieldNameCheckExtractor<T, U>(fieldNameForReport, fieldNameForValueExtraction, valueMatcher));
+    public <U> FieldCheckAdder<U> fieldWithoutGetter(String fieldNameForReport, String fieldNameForValueExtraction) {
+        return new FieldCheckAdder<U>(fieldNameForReport, fieldNameForValueExtraction);
     }
 
-    public <U> ObjectMatcher<T> fieldWithoutGetter(String fieldNameForReport, String fieldNameForValueExtraction,
-                                                      U expectedValue) {
-        return fieldWithoutGetter(fieldNameForReport, fieldNameForValueExtraction, equalTo(expectedValue));
-    }
-
-    public <U> ObjectMatcher<T> fieldWithoutGetter(String fieldNameForValueExtraction, Matcher<? super U> valueMatcher) {
-        return fieldWithoutGetter(null, fieldNameForValueExtraction, valueMatcher);
-    }
-
-    public <U> ObjectMatcher<T> fieldWithoutGetter(String fieldNameForValueExtraction, U expectedValue) {
-        return fieldWithoutGetter(null, fieldNameForValueExtraction, equalTo(expectedValue));
+    public <U> FieldCheckAdder<U> fieldWithoutGetter(String fieldNameForValueExtraction) {
+        return fieldWithoutGetter(null, fieldNameForValueExtraction);
     }
 
 
-    public ObjectMatcher<T> allFields(Matcher<? super Object> valueMatcher) {
-        return fieldsWithoutGetters(any(String.class), valueMatcher);
+    public ObjectMatcher<T> allFieldsAre(Matcher<? super Object> valueMatcher) {
+        return fieldsWithoutGetters(any(String.class)).are(valueMatcher);
     }
 
 
-    public ObjectMatcher<T> fieldsCount(Matcher<? super Integer> valueMatcher) {
+    public ObjectMatcher<T> fieldsCountIs(Matcher<? super Integer> valueMatcher) {
         return value(new FieldCountCheckExtractor<T>(valueMatcher));
     }
 
-    public ObjectMatcher<T> fieldsCount(int value) {
-        return fieldsCount(equalTo(value));
+    public ObjectMatcher<T> fieldsCountIs(int value) {
+        return fieldsCountIs(equalTo(value));
+    }
+
+
+    public class PropertyCheckAdder<U> {
+        private final String fieldNameForReport;
+        private final U lambdajGetterMethodSelector;
+
+        private PropertyCheckAdder(String fieldNameForReport, U lambdajGetterMethodSelector) {
+            this.fieldNameForReport = fieldNameForReport;
+            this.lambdajGetterMethodSelector = lambdajGetterMethodSelector;
+        }
+
+        public ObjectMatcher<T> is(U expectedValue) {
+            return is(equalTo(expectedValue));
+        }
+
+        public ObjectMatcher<T> is(Matcher<U> matcher) {
+            return field(new LambdajMethodSelectorCheckExtractor<T, U>(fieldNameForReport, lambdajGetterMethodSelector, matcher));
+        }
+    }
+
+    public class FieldCheckAdder<U> {
+        private final String fieldNameForReport;
+        private final String fieldNameForValueExtraction;
+
+        private FieldCheckAdder(String fieldNameForReport, String fieldNameForValueExtraction) {
+            this.fieldNameForReport = fieldNameForReport;
+            this.fieldNameForValueExtraction = fieldNameForValueExtraction;
+        }
+
+        public ObjectMatcher<T> is(U expectedValue) {
+            return is(equalTo(expectedValue));
+        }
+
+        public ObjectMatcher<T> is(Matcher<U> matcher) {
+            return field(new FieldNameCheckExtractor<T, U>(fieldNameForReport, fieldNameForValueExtraction, matcher));
+        }
+    }
+
+    public class FieldsCheckAdder {
+        private final Matcher<String> fieldNameMatcher;
+
+        public FieldsCheckAdder(Matcher<String> fieldNameMatcher) {
+            this.fieldNameMatcher = fieldNameMatcher;
+        }
+
+        public ObjectMatcher<T> are(Matcher<? super Object> matcher) {
+            return field(new FieldNameMatcherCheckExtractor<T>(fieldNameMatcher, matcher));
+        }
     }
 }

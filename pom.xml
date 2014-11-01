@@ -66,32 +66,6 @@
 
         <plugins>
             <plugin>
-                <groupId>org.jvnet.jaxb2.maven2</groupId>
-                <artifactId>maven-jaxb2-plugin</artifactId>
-                <version>0.11.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <args>
-                        <arg>-Xsetters</arg>
-                    </args>
-                    <plugins>
-                        <plugin>
-                            <groupId>org.jvnet.jaxb2_commons</groupId>
-                            <artifactId>jaxb2-basics</artifactId>
-                            <version>0.9.0</version>
-                        </plugin>
-                    </plugins>
-                    <generatePackage>alkedr.matchers.reporting.beans</generatePackage>
-                </configuration>
-            </plugin>
-
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.14</version>
