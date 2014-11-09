@@ -2,6 +2,7 @@ package alkedr.matchers.reporting.tests.reports;
 
 import alkedr.matchers.reporting.ObjectMatcher;
 import ch.lambdaj.Lambda;
+import org.hamcrest.Matcher;
 import org.junit.Test;
 import ru.yandex.qatools.allure.annotations.Attachment;
 
@@ -17,17 +18,22 @@ public class ReportsTest {
     public void reportsTest() {
         attachReports("Пустой отчёт", new Object(), new ObjectMatcher<>());
 
-        ComplexBean on = Lambda.on(ComplexBean.class);
-        attachReports("Сложный отчёт", new ComplexBean(), new ObjectMatcher<>()
-                        .property("booleanPropertyWithFancyName", on.getBooleanProperty()).is(equalTo(true))
-                        .property(on.getIntProperty()).is(equalTo(1))
-                        .property("longPropertyWithFancyName", on.getLongProperty()).is(2L)
-                        .property(on.getStringProperty()).is("3")
-//                        .<Boolean>property("booleanPropertyWithFancyName", on.getBooleanProperty(), is(true))
-//                        .<Integer>property(on.getIntProperty(), is(1))
-//                        .<Long>property("longPropertyWithFancyName", on.getLongProperty(), 2L)
-//                        .<String>property(on.getStringProperty(), "3")
+        VeryComplexBean on = Lambda.on(VeryComplexBean.class);
+        attachReports("Сложный отчёт", new VeryComplexBean(),
+                new ObjectMatcher<VeryComplexBean>()
+                        .property(on.getCorrect()).is(correctComplexBean())
+                        .property(on.getIncorrect()).is(correctComplexBean())
         );
+    }
+
+    private static Matcher<ComplexBean> correctComplexBean() {
+        ComplexBean on = Lambda.on(ComplexBean.class);
+        return new ObjectMatcher<ComplexBean>()
+                .property("booleanPropertyWithFancyName", on.getBooleanProperty()).is(equalTo(true))
+                .property(on.getIntProperty()).is(equalTo(1))
+                .property("longPropertyWithFancyName", on.getLongProperty()).is(2L)
+                .property(on.getStringProperty()).is("3")
+        ;
     }
 
     private static <T> void attachReports(String reportName, T actual, ObjectMatcher<? super T> matcher) {
@@ -47,11 +53,37 @@ public class ReportsTest {
         return generatePlainTextReport(matcher.getCheckResult());
     }
 
+    private static class VeryComplexBean {
+        private final ComplexBean correct = new ComplexBean();
+        private final ComplexBean incorrect = new ComplexBean();
+        private final ComplexBean unchecked = new ComplexBean();
+
+        public ComplexBean getCorrect() {
+            return correct;
+        }
+
+        public ComplexBean getIncorrect() {
+            return incorrect;
+        }
+
+        public ComplexBean getUnchecked() {
+            return unchecked;
+        }
+    }
+
     private static class ComplexBean {
         private final boolean booleanProperty = false;
         private final int intProperty = 1;
-        private final Long longProperty = 2L;
+        private final Long longProperty;
         private final String stringProperty = "3";
+
+        private ComplexBean() {
+            this(2L);
+        }
+
+        private ComplexBean(Long longProperty) {
+            this.longProperty = longProperty;
+        }
 
         public boolean getBooleanProperty() {
             return booleanProperty;

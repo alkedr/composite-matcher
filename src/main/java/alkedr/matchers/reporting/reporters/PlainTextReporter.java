@@ -13,7 +13,8 @@ public final class PlainTextReporter {
 
 
     private static String generatePlainTextReport(CheckResult check, String indent) {
-        return indent + status(check) + " - " + check.getActualValueName() + matcherResults(check, indent + "  ");
+        return indent + status(check) + " - " + check.getActualValueName() + ": " + check.getActualValueAsString()
+                + matcherResults(check, indent + "  ");
     }
 
     private static String status(CheckResult check) {
@@ -29,7 +30,7 @@ public final class PlainTextReporter {
                 return "\n";
             }
             if (check.getMismatchDescription() == null) {
-                return format(" %s\n", check.getMatcherDescription());
+                return format(" - %s\n", check.getMatcherDescription());
             }
             return format("\n%sExpected: %s\n%s     but: %s\n", indent, check.getMatcherDescription(), indent, check.getMismatchDescription());
         } else {

@@ -11,6 +11,7 @@ import static java.util.Collections.*;
 
 public class CheckResult {
     @Nullable private String actualValueName = null;
+    @Nullable private String actualValueAsString = null;
     @Nullable private String matcherDescription = null;
     @Nullable private String mismatchDescription = null;
     @NotNull private List<CheckResult> fields = new ArrayList<>();
@@ -40,6 +41,15 @@ public class CheckResult {
 
     public void setActualValueName(@Nullable String actualValueName) {
         this.actualValueName = actualValueName;
+    }
+
+    @Nullable
+    public String getActualValueAsString() {
+        return actualValueAsString;
+    }
+
+    public void setActualValueAsString(@Nullable String actualValueAsString) {
+        this.actualValueAsString = actualValueAsString;
     }
 
     @Nullable

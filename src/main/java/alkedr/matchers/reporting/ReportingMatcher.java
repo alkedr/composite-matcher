@@ -5,6 +5,7 @@ import alkedr.matchers.reporting.checks.PlannedCheck;
 import alkedr.matchers.reporting.checks.PlannedCheckExtractor;
 import ch.lambdaj.function.convert.Converter;
 import org.hamcrest.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,14 +18,24 @@ import static org.hamcrest.Matchers.is;
  * Матчер, проверяющий поля, свойства и возвращаемые значения методов любого класса
  * Использовать этот класс напрямую неудобно, лучше наследоваться и добавлять нужные методы
  * TODO: пример использования
+ * TODO: механизм для сбора непроверенных полей  Что делать с полями, для которых были заданы другие имена?
+ * TODO: несколько матчеров на поле
  * TODO: механизм для интеграции с аннотациями GSON, Jaxb, Selenium, htmlelements и пр.
  *       (interface NameExtractor, который преобразовывает (actual, defaultName) -> name)?
- * TODO: глобальная ThreadLocal-переменная для сбора результатов вложенных матчеров (потому что describedAs, should и пр.)
  */
 public class ReportingMatcher<T, This extends ReportingMatcher<T, This>> extends TypeSafeDiagnosingMatcher<T> {
     private final Collection<PlannedCheckExtractor<T, ?>> fieldCheckExtractors = new ArrayList<>();
     private final Collection<PlannedCheckExtractor<T, ?>> nonFieldCheckExtractors = new ArrayList<>();
     private CheckResult result = null;
+
+    /**
+     * хранит информацию о запуске другого ReportingMatcher'а, который быз вызван из текущего ReportingMatcher'а
+     * нужно для того, чтобы присоединить отчёт о проверках внутреннего матчера к отчёту текущего матчера
+     * checkThat зануляет INNER_COMPOSITE_MATCHER_RESULT и вызывает matcher.matches()
+     * если после этого INNER_COMPOSITE_MATCHER_RESULT не нулл, значит matcher является ReportingMatcher'ом или использует ReportingMatcher внутри
+     * нельзя просто попытаться покастить matcher к ReportingMatcher'у, т. к. бывают обёртки для матчеров (напр. describedAs())
+     */
+    private static final ThreadLocal<CheckResult> INNER_COMPOSITE_MATCHER_RESULT = new ThreadLocal<>();
 
     /**
      * Добавляет проверку поля.
@@ -59,6 +70,7 @@ public class ReportingMatcher<T, This extends ReportingMatcher<T, This>> extends
         result.setActualValueName("object");
         result.setFields(extractAndExecuteChecks(item, fieldCheckExtractors));
         result.setNonFields(extractAndExecuteChecks(item, nonFieldCheckExtractors));
+        INNER_COMPOSITE_MATCHER_RESULT.set(result);
         return result.isSuccessful();
     }
 
@@ -86,78 +98,36 @@ public class ReportingMatcher<T, This extends ReportingMatcher<T, This>> extends
             @Override
             public CheckResult convert(PlannedCheck<?> from) {
                 CheckResult check = new CheckResult();
-                check.setActualValueName(from.getActualValueName());
-                check.setMatcherDescription(getDescription(from.getMatcher()));
-                if (!from.getMatcher().matches(from.getActualValue())) {
-                    check.setMismatchDescription(getMismatchDescription(from.getActualValue(), from.getMatcher()));
+                check.setActualValueName(from.getName());
+                check.setActualValueAsString(String.valueOf(from.getActualValue()));
+
+                if (from.getMatchers() != null) {
+                    check.setMatcherDescription(getDescription(from.getMatchers()));
+                    INNER_COMPOSITE_MATCHER_RESULT.remove();
+                    if (!from.getMatchers().matches(from.getActualValue())) {
+                        check.setMismatchDescription(getMismatchDescription(from.getActualValue(), from.getMatchers()));
+                    }
+                    if (INNER_COMPOSITE_MATCHER_RESULT.get() != null) {
+                        check.setFields(INNER_COMPOSITE_MATCHER_RESULT.get().getFields());
+                        check.setNonFields(INNER_COMPOSITE_MATCHER_RESULT.get().getNonFields());
+                    }
                 }
-                // TODO: innerChecks
                 return check;
             }
         });
     }
 
-    private static String getMismatchDescription(Object actualValue, Matcher<?> matcher) {
+    @NotNull
+    private static String getMismatchDescription(@NotNull Object actualValue, @NotNull Matcher<?> matcher) {
         StringDescription stringDescription = new StringDescription();
         matcher.describeMismatch(actualValue, stringDescription);
         return stringDescription.toString();
     }
 
-    private static String getDescription(SelfDescribing selfDescribing) {
+    @NotNull
+    private static String getDescription(@NotNull SelfDescribing selfDescribing) {
         StringDescription stringDescription = new StringDescription();
         selfDescribing.describeTo(stringDescription);
         return stringDescription.toString();
     }
-
-
-
-
-
-/*
-
-
-
-    private static final String HTML_REPORT_XSL = "/html-report.xsl";
-    private static final String PLAIN_TEXT_REPORT_XSL = "/plain-text-report.xsl";
-    private static final TransformerFactory TRANSFORMER_FACTORY = TransformerFactory.newInstance();
-    private static final Transformer HTML_TRANSFORMER = loadXslTransformer(HTML_REPORT_XSL);
-    private static final Transformer PLAIN_TEXT_TRANSFORMER = loadXslTransformer(PLAIN_TEXT_REPORT_XSL);
-
-    public static Transformer loadXslTransformer(String xslResourceName) {
-        try (InputStream inputStream = ReportingMatcher.class.getResourceAsStream(xslResourceName)) {
-            return TRANSFORMER_FACTORY.newTransformer(new StreamSource(inputStream));
-        } catch (TransformerConfigurationException | IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
-    public String generateHtmlReport() {
-        return generateReport(HTML_TRANSFORMER);
-    }
-
-    public String generatePlainTextReport() {
-        return generateReport(PLAIN_TEXT_TRANSFORMER);
-    }
-
-    private String generateReport(Transformer transformer) {
-        try (StringWriter output = new StringWriter()) {
-            transformer.transform(new StreamSource(new StringReader(getReportXml())), new StreamResult(output));
-            return output.toString();
-        } catch (TransformerException | IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private String getReportXml() {
-        try (StringWriter output = new StringWriter()) {
-            JAXBContext.newInstance(CheckResult.class).createMarshaller().marshal(result, output);
-            return output.toString();
-        } catch (JAXBException | IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-*/
-
-
 }

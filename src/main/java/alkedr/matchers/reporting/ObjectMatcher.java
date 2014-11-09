@@ -6,12 +6,13 @@ import alkedr.matchers.reporting.checks.extractors.FieldNameMatcherCheckExtracto
 import alkedr.matchers.reporting.checks.extractors.LambdajMethodSelectorCheckExtractor;
 import ch.lambdaj.function.argument.Argument;
 import org.hamcrest.Matcher;
+import org.jetbrains.annotations.NotNull;
 
 import static ch.lambdaj.function.argument.ArgumentsFactory.actualArgument;
 import static org.hamcrest.Matchers.any;
 import static org.hamcrest.Matchers.equalTo;
 
-public class ObjectMatcher<T> extends ReportingMatcher<T, ObjectMatcher<T>> {
+public class ObjectMatcher<T> extends ReportingMatcher2<T> {
 
     public <U> PropertyCheckAdder<U> property(String fieldNameForReport, U lambdajGetterMethodSelector) {
         return new PropertyCheckAdder<>(fieldNameForReport, lambdajGetterMethodSelector);
@@ -98,4 +99,15 @@ public class ObjectMatcher<T> extends ReportingMatcher<T, ObjectMatcher<T>> {
             return field(new FieldNameMatcherCheckExtractor<T>(fieldNameMatcher, matcher));
         }
     }
+
+
+
+    @NotNull
+    @Override
+    protected CheckPlan getCheckPlan(T actualValue) {
+        return new CheckPlan()
+                .addCheck("1232", actualValue.toString(), equalTo(""))
+                ;
+    }
+
 }

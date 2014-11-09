@@ -2,16 +2,13 @@ package alkedr.matchers.reporting.checks.extractors;
 
 import alkedr.matchers.reporting.checks.PlannedCheck;
 import alkedr.matchers.reporting.checks.PlannedCheckExtractor;
-import ch.lambdaj.Lambda;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.List;
 
 import static ch.lambdaj.Lambda.having;
-import static ch.lambdaj.Lambda.on;
 import static ch.lambdaj.Lambda.select;
 import static java.lang.reflect.Modifier.*;
 import static java.util.Arrays.asList;
