@@ -3,11 +3,17 @@ package alkedr.matchers.reporting.checks;
 import org.jetbrains.annotations.Nullable;
 
 public class ExecutedSimpleCheck {
-    @Nullable private String matcherDescription = null;
-    @Nullable private String mismatchDescription = null;
+    @Nullable private final String matcherDescription;
+    @Nullable private final String mismatchDescription;
+
+
+    public ExecutedSimpleCheck(@Nullable String matcherDescription, @Nullable String mismatchDescription) {
+        this.matcherDescription = matcherDescription;
+        this.mismatchDescription = mismatchDescription;
+    }
 
     public boolean isSuccessful() {
-        return mismatchDescription != null;
+        return mismatchDescription == null;
     }
 
     @Nullable
@@ -15,16 +21,8 @@ public class ExecutedSimpleCheck {
         return matcherDescription;
     }
 
-    public void setMatcherDescription(@Nullable String matcherDescription) {
-        this.matcherDescription = matcherDescription;
-    }
-
     @Nullable
     public String getMismatchDescription() {
         return mismatchDescription;
-    }
-
-    public void setMismatchDescription(@Nullable String mismatchDescription) {
-        this.mismatchDescription = mismatchDescription;
     }
 }

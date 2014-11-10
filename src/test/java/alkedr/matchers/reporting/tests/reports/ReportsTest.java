@@ -7,10 +7,7 @@ import org.junit.Test;
 import ru.yandex.qatools.allure.annotations.Attachment;
 
 import static alkedr.matchers.reporting.reporters.HtmlReporter.generateHtmlReport;
-import static alkedr.matchers.reporting.reporters.PlainTextReporter.generatePlainTextReport;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertThat;
 
 @SuppressWarnings("JUnitTestMethodWithNoAssertions")
 public class ReportsTest {
@@ -38,7 +35,7 @@ public class ReportsTest {
 
     private static <T> void attachReports(String reportName, T actual, ObjectMatcher<? super T> matcher) {
         attachHtmlReport(reportName, actual, matcher);
-        attachPlainTextReport(reportName, actual, matcher);
+//        attachPlainTextReport(reportName, actual, matcher);
     }
 
     @Attachment(value = "{0} (html)", type = "text/html")
@@ -47,11 +44,11 @@ public class ReportsTest {
         return generateHtmlReport(matcher.getCheckResult());
     }
 
-    @Attachment(value = "{0} (plain text)", type = "text/plain")
-    private static <T> String attachPlainTextReport(@SuppressWarnings("UnusedParameters") String reportName, T actual, ObjectMatcher<? super T> matcher) {
-        matcher.matches(actual);
-        return generatePlainTextReport(matcher.getCheckResult());
-    }
+//    @Attachment(value = "{0} (plain text)", type = "text/plain")
+//    private static <T> String attachPlainTextReport(@SuppressWarnings("UnusedParameters") String reportName, T actual, ObjectMatcher<? super T> matcher) {
+//        matcher.matches(actual);
+//        return generatePlainTextReport(matcher.getCheckResult());
+//    }
 
     private static class VeryComplexBean {
         private final ComplexBean correct = new ComplexBean();

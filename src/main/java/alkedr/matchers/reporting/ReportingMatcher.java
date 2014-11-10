@@ -1,77 +1,53 @@
 package alkedr.matchers.reporting;
 
-import alkedr.matchers.reporting.checks.CheckResult;
-import alkedr.matchers.reporting.checks.PlannedCheck;
-import alkedr.matchers.reporting.checks.PlannedCheckExtractor;
-import ch.lambdaj.function.convert.Converter;
+import alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
+import alkedr.matchers.reporting.checks.ExecutedSimpleCheck;
 import org.hamcrest.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static ch.lambdaj.Lambda.*;
-import static org.hamcrest.Matchers.is;
+import static java.util.Collections.unmodifiableList;
 
 /**
- * Матчер, проверяющий поля, свойства и возвращаемые значения методов любого класса
- * Использовать этот класс напрямую неудобно, лучше наследоваться и добавлять нужные методы
- * TODO: пример использования
- * TODO: механизм для сбора непроверенных полей  Что делать с полями, для которых были заданы другие имена?
- * TODO: несколько матчеров на поле
- * TODO: механизм для интеграции с аннотациями GSON, Jaxb, Selenium, htmlelements и пр.
- *       (interface NameExtractor, который преобразовывает (actual, defaultName) -> name)?
+ * Базовый класс для матчеров, которые умеют строить красивые отчёты с результатами своей работы.
+ * Наследники должны переопределить {@link ReportingMatcher#checkPlanFor}.
+ * Наследники могут переопределить {@link ReportingMatcher#describeTo}.
  */
-public class ReportingMatcher<T, This extends ReportingMatcher<T, This>> extends TypeSafeDiagnosingMatcher<T> {
-    private final Collection<PlannedCheckExtractor<T, ?>> fieldCheckExtractors = new ArrayList<>();
-    private final Collection<PlannedCheckExtractor<T, ?>> nonFieldCheckExtractors = new ArrayList<>();
-    private CheckResult result = null;
+public abstract class ReportingMatcher<T> extends TypeSafeMatcher<T> {
+    private ExecutedCompositeCheck checkResult = null;
 
     /**
-     * хранит информацию о запуске другого ReportingMatcher'а, который быз вызван из текущего ReportingMatcher'а
-     * нужно для того, чтобы присоединить отчёт о проверках внутреннего матчера к отчёту текущего матчера
-     * checkThat зануляет INNER_COMPOSITE_MATCHER_RESULT и вызывает matcher.matches()
-     * если после этого INNER_COMPOSITE_MATCHER_RESULT не нулл, значит matcher является ReportingMatcher'ом или использует ReportingMatcher внутри
-     * нельзя просто попытаться покастить matcher к ReportingMatcher'у, т. к. бывают обёртки для матчеров (напр. describedAs())
+     * {@link ReportingMatcher.CheckPlan}
+     * @param actualValue значение, которое было передано в {@link org.hamcrest.Matcher#matches}
+     * @return план проверок для actualValue
      */
-    private static final ThreadLocal<CheckResult> INNER_COMPOSITE_MATCHER_RESULT = new ThreadLocal<>();
+    @NotNull
+    protected abstract CheckPlan checkPlanFor(T actualValue);
+
 
     /**
-     * Добавляет проверку поля.
-     * @return this
+     * @return подробные результаты последнего вызова {@link ReportingMatcher#matches} или null если
+     * {@link ReportingMatcher#matches} для данного инстанса не вызывался
      */
-    public This field(PlannedCheckExtractor<T, ?> plannedCheckExtractor) {
-        fieldCheckExtractors.add(plannedCheckExtractor);
-        return (This)this;
-    }
-
-    /**
-     * Добавляет проверку не-поля.
-     * В отчёте такие проверки отобразится одним блоком отдельно от полей.
-     * @return this
-     */
-    public This value(PlannedCheckExtractor<T, ?> plannedCheckExtractor) {
-        nonFieldCheckExtractors.add(plannedCheckExtractor);
-        return (This)this;
-    }
-
-    /**
-     * @return результат проверки или null если метод {@link org.hamcrest.Matcher#matches} не был вызван
-     */
-    public CheckResult getCheckResult() {
-        return result;
+    @Nullable
+    public ExecutedCompositeCheck getCheckResult() {
+        return checkResult;
     }
 
 
     @Override
-    protected boolean matchesSafely(T item, Description mismatchDescription) {
-        result = new CheckResult();
-        result.setActualValueName("object");
-        result.setFields(extractAndExecuteChecks(item, fieldCheckExtractors));
-        result.setNonFields(extractAndExecuteChecks(item, nonFieldCheckExtractors));
-        INNER_COMPOSITE_MATCHER_RESULT.set(result);
-        return result.isSuccessful();
+    protected boolean matchesSafely(T item) {
+        checkResult = execute(checkPlanFor(item));
+        return checkResult.isSuccessful();
+    }
+
+    @Override
+    protected void describeMismatchSafely(T item, Description mismatchDescription) {
+        // TODO:
     }
 
     @Override
@@ -81,53 +57,152 @@ public class ReportingMatcher<T, This extends ReportingMatcher<T, This>> extends
 
 
 
-    private List<CheckResult> extractAndExecuteChecks(T item, Iterable<PlannedCheckExtractor<T, ?>> checkExtractors) {
-        return executeChecks(extractChecks(item, checkExtractors));
-    }
-
-    private List<PlannedCheck<?>> extractChecks(T item, Iterable<PlannedCheckExtractor<T, ?>> checkExtractors) {
-        List<PlannedCheck<?>> extractedChecks = new ArrayList<>();
-        for (PlannedCheckExtractor<T, ?> extractor : checkExtractors) {
-            extractedChecks.addAll(extractor.extractChecks(item));
-        }
-        return extractedChecks;
-    }
-
-    private static List<CheckResult> executeChecks(List<PlannedCheck<?>> plannedChecks) {
-        return convert(plannedChecks, new Converter<PlannedCheck<?>, CheckResult>() {
-            @Override
-            public CheckResult convert(PlannedCheck<?> from) {
-                CheckResult check = new CheckResult();
-                check.setActualValueName(from.getName());
-                check.setActualValueAsString(String.valueOf(from.getActualValue()));
-
-                if (from.getMatchers() != null) {
-                    check.setMatcherDescription(getDescription(from.getMatchers()));
-                    INNER_COMPOSITE_MATCHER_RESULT.remove();
-                    if (!from.getMatchers().matches(from.getActualValue())) {
-                        check.setMismatchDescription(getMismatchDescription(from.getActualValue(), from.getMatchers()));
-                    }
-                    if (INNER_COMPOSITE_MATCHER_RESULT.get() != null) {
-                        check.setFields(INNER_COMPOSITE_MATCHER_RESULT.get().getFields());
-                        check.setNonFields(INNER_COMPOSITE_MATCHER_RESULT.get().getNonFields());
-                    }
+    private static ExecutedCompositeCheck execute(CheckPlan checkPlan) {
+        List<ExecutedCompositeCheck> executedCompositeChecks = new ArrayList<>();
+        for (PlannedCheck<?> plannedCheck : checkPlan.getPlannedChecks()) {
+            List<ExecutedSimpleCheck> innerSimpleChecks = new ArrayList<>();
+            for (Matcher<?> matcher : plannedCheck.getMatchers()) {
+                INNER_CHECK_RESULT.remove();
+                boolean matcherResult = matcher.matches(plannedCheck.getActualValue());
+                if (INNER_CHECK_RESULT.get() == null) {
+                    innerSimpleChecks.add(new ExecutedSimpleCheck(
+                            getDescription(matcher),
+                            matcherResult ? null : getMismatchDescription(matcher, plannedCheck.getActualValue())
+                    ));
+                } else {
+                    executedCompositeChecks.add(new ExecutedCompositeCheck(
+                            plannedCheck.getName(), String.valueOf(plannedCheck.getActualValue()),
+                            INNER_CHECK_RESULT.get().getInnerSimpleChecks(), INNER_CHECK_RESULT.get().getInnerCompositeChecks()
+                    ));
                 }
-                return check;
             }
-        });
+            if (!innerSimpleChecks.isEmpty()) {
+                executedCompositeChecks.add(new ExecutedCompositeCheck(
+                        plannedCheck.getName(), String.valueOf(plannedCheck.getActualValue()),
+                        innerSimpleChecks, new ArrayList<ExecutedCompositeCheck>()
+                ));
+            }
+        }
+        ExecutedCompositeCheck executedCompositeCheck = new ExecutedCompositeCheck(
+                null, null,
+                new ArrayList<ExecutedSimpleCheck>(), executedCompositeChecks
+        );
+        INNER_CHECK_RESULT.set(executedCompositeCheck);
+        return executedCompositeCheck;
     }
 
-    @NotNull
-    private static String getMismatchDescription(@NotNull Object actualValue, @NotNull Matcher<?> matcher) {
+
+    private static String getDescription(SelfDescribing matcher) {
         StringDescription stringDescription = new StringDescription();
-        matcher.describeMismatch(actualValue, stringDescription);
+        matcher.describeTo(stringDescription);
         return stringDescription.toString();
     }
 
-    @NotNull
-    private static String getDescription(@NotNull SelfDescribing selfDescribing) {
-        StringDescription stringDescription = new StringDescription();
-        selfDescribing.describeTo(stringDescription);
-        return stringDescription.toString();
+    private static String getMismatchDescription(Matcher<?> matcher, Object actualValue) {
+        StringDescription stringMismatchDescription = new StringDescription();
+        matcher.describeMismatch(actualValue, stringMismatchDescription);
+        return stringMismatchDescription.toString();
     }
+
+    /**
+     * хранит информацию о запуске другого ReportingMatcher'а, который быз вызван из текущего ReportingMatcher'а
+     * нужно для того, чтобы присоединить отчёт о проверках внутреннего матчера к отчёту текущего матчера
+     * checkThat зануляет INNER_CHECK_RESULT и вызывает matcher.matches()
+     * если после этого INNER_CHECK_RESULT не нулл, значит matcher является ReportingMatcher'ом или использует ReportingMatcher внутри
+     * нельзя просто попытаться покастить matcher к ReportingMatcher'у, т. к. бывают обёртки для матчеров (напр. describedAs())
+     */
+    private static final ThreadLocal<ExecutedCompositeCheck> INNER_CHECK_RESULT = new ThreadLocal<>();
+
+
+
+    public static class CheckPlan {
+        private final Collection<PlannedCheck<?>> plannedChecks = new ArrayList<>();
+
+        /**
+         * Добавляет значение без проверок в список.
+         * Значения без проверок отображаются в отчёте.
+         * Это может быть полезно для контроля за тем, какие поля проверяются, а какие нет.
+         * Если для данного значения уже были добавлены проверки, то этот метод ничего не изменит.
+         * @param name описание значения, часть ключа, сравнивается по .equals()
+         * @param value значение, часть ключа, сравнивается по ==
+         * @return this
+         */
+        public <U> CheckPlan addCheck(String name, U value) {
+            getOrAddCheckForValue(name, value);
+            return this;
+        }
+
+        /**
+         * Добавляет проверку значения в список.
+         * Если для данного значения уже были добавлены проверки, то они сгруппируются.
+         * @param name описание значения, часть ключа, сравнивается по .equals()
+         * @param value значение, часть ключа, сравнивается по ==
+         * @param matcher матчер
+         * @return this
+         */
+        public <U> CheckPlan addCheck(String name, U value, Matcher<? super U> matcher) {
+            getOrAddCheckForValue(name, value).addMatcher(matcher);
+            return this;
+        }
+
+        public Collection<PlannedCheck<?>> getPlannedChecks() {
+            return plannedChecks;
+        }
+
+        private <U> PlannedCheck<U> getOrAddCheckForValue(String name, U value) {
+            for (PlannedCheck<?> plannedCheck : plannedChecks) {
+                if ((plannedCheck.getActualValue() == value) && plannedCheck.getName().equals(name)) {  // '==' не случайно
+                    return (PlannedCheck<U>)plannedCheck;
+                }
+            }
+            PlannedCheck<U> newPlannedCheck = new PlannedCheck<>(name, value, new ArrayList<Matcher<? super U>>());
+            plannedChecks.add(newPlannedCheck);
+            return newPlannedCheck;
+        }
+    }
+
+
+
+    /**
+     * Запланированная проверка объекта или его части.
+     * Используется для указания ReportingMatcher'у что и как проверять.
+     */
+    private static class PlannedCheck<ActualValueType> {
+        @NotNull private final String name;
+        @NotNull private final ActualValueType actualValue;
+        @NotNull private final List<Matcher<? super ActualValueType>> matchers;
+
+
+        /**
+         * @param name название поля
+         * @param actualValue значение поля
+         * @param matchers матчеры, если пустой список, то поле отобразится в отчёте как непроверенное
+         */
+        private PlannedCheck(@NotNull String name, @NotNull ActualValueType actualValue,
+                             @NotNull List<? extends Matcher<? super ActualValueType>> matchers) {
+            this.name = name;
+            this.actualValue = actualValue;
+            this.matchers = new ArrayList<>(matchers);
+        }
+
+        public void addMatcher(Matcher<? super ActualValueType> matcher) {
+            matchers.add(matcher);
+        }
+
+        @NotNull
+        public String getName() {
+            return name;
+        }
+
+        @NotNull
+        public ActualValueType getActualValue() {
+            return actualValue;
+        }
+
+        @NotNull
+        public List<Matcher<? super ActualValueType>> getMatchers() {
+            return unmodifiableList(matchers);
+        }
+    }
+
 }
