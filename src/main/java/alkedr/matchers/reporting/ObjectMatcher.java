@@ -1,5 +1,6 @@
 package alkedr.matchers.reporting;
 
+import alkedr.matchers.reporting.plan.CheckPlan;
 import ch.lambdaj.function.argument.Argument;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
@@ -113,7 +114,7 @@ public class ObjectMatcher<T> extends ReportingMatcher<T> {
             if (!isStatic(field.getModifiers())) {
                 field.setAccessible(true);
                 try {
-                    plan.addCheck(field.getName(), field.get(actualValue));
+                    plan.addValue(field.getName(), field.get(actualValue));
                 } catch (IllegalAccessException ignored) {
                 }
             }
@@ -124,7 +125,7 @@ public class ObjectMatcher<T> extends ReportingMatcher<T> {
         try {
             for (PropertyDescriptor pd : getBeanInfo(actualValue.getClass()).getPropertyDescriptors()) {
                 pd.getReadMethod().setAccessible(true);
-                plan.addCheck(pd.getName(), pd.getReadMethod().invoke(actualValue));
+                plan.addValue(pd.getName(), pd.getReadMethod().invoke(actualValue));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

@@ -1,29 +1,34 @@
 package alkedr.matchers.reporting.checks;
 
+import org.hamcrest.Matcher;
+import org.hamcrest.StringDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.*;
 
+import static java.util.Collections.*;
 import static java.util.Collections.unmodifiableList;
 
 public class ExecutedCompositeCheck {
-    @Nullable private final String actualValueName;
     @Nullable private final String actualValueAsString;
-    @NotNull private final List<ExecutedCompositeCheck> innerCompositeChecks;  // сюда попадают ReportingMatcher'ы
-    @NotNull private final List<ExecutedSimpleCheck> innerSimpleChecks;  // сюда попадают другие матчеры
+    @NotNull private final Map<String, ExecutedCompositeCheck> valueNameToInnerCompositeCheck = new LinkedHashMap<>(); // сюда попадают ReportingMatcher'ы, если их несколько, то мёржатся
+    @NotNull private final List<ExecutedSimpleCheck> innerSimpleChecks = new ArrayList<>();  // сюда попадают другие матчеры
 
-    public ExecutedCompositeCheck(@Nullable String name, @Nullable String actualValueAsString,
-                                  @NotNull List<ExecutedSimpleCheck> innerSimpleChecks,
-                                  @NotNull List<ExecutedCompositeCheck> innerCompositeChecks) {
-        this.actualValueName = name;
+    public ExecutedCompositeCheck(@Nullable String actualValueAsString) {
         this.actualValueAsString = actualValueAsString;
-        this.innerSimpleChecks = innerSimpleChecks;
-        this.innerCompositeChecks = innerCompositeChecks;
+    }
+
+    public void addCompositeCheck(String name, ExecutedCompositeCheck check) {
+        valueNameToInnerCompositeCheck.put(name, check);
+    }
+
+    public void addSimpleCheck(ExecutedSimpleCheck check) {
+        innerSimpleChecks.add(check);
     }
 
     public boolean isSuccessful() {
-        for (ExecutedCompositeCheck executedCompositeCheck : innerCompositeChecks) {
+        for (ExecutedCompositeCheck executedCompositeCheck : valueNameToInnerCompositeCheck.values()) {
             if (!executedCompositeCheck.isSuccessful()) {
                 return false;
             }
@@ -40,7 +45,7 @@ public class ExecutedCompositeCheck {
         if (!innerSimpleChecks.isEmpty()) {
             return true;
         }
-        for (ExecutedCompositeCheck executedCompositeCheck : innerCompositeChecks) {
+        for (ExecutedCompositeCheck executedCompositeCheck : valueNameToInnerCompositeCheck.values()) {
             if (executedCompositeCheck.hasAtLeastOneMatcher()) {
                 return true;
             }
@@ -49,13 +54,7 @@ public class ExecutedCompositeCheck {
     }
 
     public boolean isLeaf() {
-        return innerCompositeChecks.isEmpty();
-    }
-
-
-    @Nullable
-    public String getActualValueName() {
-        return actualValueName;
+        return valueNameToInnerCompositeCheck.isEmpty();
     }
 
     @Nullable
@@ -64,8 +63,8 @@ public class ExecutedCompositeCheck {
     }
 
     @NotNull
-    public List<ExecutedCompositeCheck> getInnerCompositeChecks() {
-        return unmodifiableList(innerCompositeChecks);
+    public Map<String, ExecutedCompositeCheck> getValueNameToInnerCompositeCheck() {
+        return unmodifiableMap(valueNameToInnerCompositeCheck);
     }
 
     @NotNull

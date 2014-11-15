@@ -41,13 +41,13 @@ public class ReportsTest {
     @Attachment(value = "{0} (html)", type = "text/html")
     private static <T> String attachHtmlReport(@SuppressWarnings("UnusedParameters") String reportName, T actual, ObjectMatcher<? super T> matcher) {
         matcher.matches(actual);
-        return generateHtmlReport(matcher.getCheckResult());
+        return generateHtmlReport(matcher.getLastCheckResult());
     }
 
 //    @Attachment(value = "{0} (plain text)", type = "text/plain")
 //    private static <T> String attachPlainTextReport(@SuppressWarnings("UnusedParameters") String reportName, T actual, ObjectMatcher<? super T> matcher) {
 //        matcher.matches(actual);
-//        return generatePlainTextReport(matcher.getCheckResult());
+//        return generatePlainTextReport(matcher.getLastCheckResult());
 //    }
 
     private static class VeryComplexBean {
