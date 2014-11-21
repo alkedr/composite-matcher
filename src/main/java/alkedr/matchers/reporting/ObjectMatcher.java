@@ -1,37 +1,38 @@
 package alkedr.matchers.reporting;
 
-import alkedr.matchers.reporting.plan.CheckPlan;
+import alkedr.matchers.reporting.checks.ExecutableCheck;
+import alkedr.matchers.reporting.extractors.ExecutableCheckExtractor;
 import ch.lambdaj.function.argument.Argument;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
 
-import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
+import static alkedr.matchers.reporting.extractors.ExtractorsUtils.extractChecks;
 import static ch.lambdaj.function.argument.ArgumentsFactory.actualArgument;
 import static java.beans.Introspector.getBeanInfo;
 import static java.lang.reflect.Modifier.isStatic;
+import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.any;
 import static org.hamcrest.Matchers.equalTo;
 
+/**
+ * Два метода использования: построение с пом. fluent API и написание обёртки с определением своего fluent API
+ * TODO: класс, упрощающий написание обёртки
+ */
 public class ObjectMatcher<T> extends ReportingMatcher<T> {
     private boolean includeUncheckedFields = true;
-    private final List<PlannedCheckExtractor> plannedCheckExtractors = new ArrayList<>();
+    private final Collection<ExecutableCheckExtractor> executableCheckExtractors = new ArrayList<>();
 
 
 
     public ObjectMatcher<T> includeUncheckedFields() {
-        return includeUncheckedFields(true);
+        return this;
     }
 
-    public ObjectMatcher<T> dontIncludeUncheckedFields() {
-        return includeUncheckedFields(false);
-    }
-
-    public ObjectMatcher<T> includeUncheckedFields(boolean newValue) {
-        includeUncheckedFields = newValue;
+    public ObjectMatcher<T> includeUncheckedProperties() {
         return this;
     }
 
@@ -67,16 +68,16 @@ public class ObjectMatcher<T> extends ReportingMatcher<T> {
 
 
     public ObjectMatcher<T> fieldsCountIs(final Matcher<? super Integer> valueMatcher) {
-        return addPlannedCheckExtractor(new PlannedCheckExtractor() {
+        return addExecutableCheckExtractor(new ExecutableCheckExtractor() {
             @Override
-            public void addChecksToPlan(CheckPlan plan, Object actual) {
+            public Collection<ExecutableCheck> extract(Class<?> clazz, Object actual) {
                 int actualFieldsCount = 0;
                 for (Field field : actual.getClass().getFields()) {
                     if (!isStatic(field.getModifiers())) {
                         actualFieldsCount++;
                     }
                 }
-                plan.addCheck("fields count", actualFieldsCount, valueMatcher);
+                return asList(new ExecutableCheck("fields count", actualFieldsCount, asList(valueMatcher)));
             }
         });
     }
@@ -88,28 +89,20 @@ public class ObjectMatcher<T> extends ReportingMatcher<T> {
 
 
 
-    private ObjectMatcher<T> addPlannedCheckExtractor(PlannedCheckExtractor extractor) {
-        plannedCheckExtractors.add(extractor);
+    private ObjectMatcher<T> addExecutableCheckExtractor(ExecutableCheckExtractor extractor) {
+        executableCheckExtractors.add(extractor);
         return this;
     }
 
 
     @NotNull
     @Override
-    protected CheckPlan checkPlanFor(T actualValue) {
-        CheckPlan plan = new CheckPlan();
-        if (includeUncheckedFields) {
-            addAllFields(plan, actualValue);
-            addAllProperties(plan, actualValue);
-        }
-        for (PlannedCheckExtractor extractor : plannedCheckExtractors) {
-            extractor.addChecksToPlan(plan, actualValue);
-        }
-        return plan;
+    protected Collection<ExecutableCheck> getChecksFor(Object actualValue) {
+        return extractChecks(executableCheckExtractors, actualValue.getClass()/*Fixme*/, actualValue);
     }
 
-
-    private void addAllFields(CheckPlan plan, T actualValue) {
+/*
+    private void addAllFields(T actualValue) {
         for (Field field : actualValue.getClass().getFields()) {
             if (!isStatic(field.getModifiers())) {
                 field.setAccessible(true);
@@ -121,7 +114,7 @@ public class ObjectMatcher<T> extends ReportingMatcher<T> {
         }
     }
 
-    private void addAllProperties(CheckPlan plan, T actualValue) {
+    private void addAllProperties(T actualValue) {
         try {
             for (PropertyDescriptor pd : getBeanInfo(actualValue.getClass()).getPropertyDescriptors()) {
                 pd.getReadMethod().setAccessible(true);
@@ -131,13 +124,7 @@ public class ObjectMatcher<T> extends ReportingMatcher<T> {
             throw new RuntimeException(e);
         }
     }
-
-
-
-    private interface PlannedCheckExtractor {
-        void addChecksToPlan(CheckPlan plan, Object actual);
-    }
-
+*/
 
     public class PropertyCheckAdder<U> {
         private final String fieldNameForReport;
@@ -153,10 +140,10 @@ public class ObjectMatcher<T> extends ReportingMatcher<T> {
         }
 
         public ObjectMatcher<T> is(final Matcher<U> matcher) {
-            return addPlannedCheckExtractor(new PlannedCheckExtractor() {
+            return addExecutableCheckExtractor(new ExecutableCheckExtractor() {
                 @Override
-                public void addChecksToPlan(CheckPlan plan, Object actual) {
-                    plan.addCheck(fieldNameForReport, actualArgument(lambdajGetterMethodSelector).evaluate(actual), matcher);
+                public Collection<ExecutableCheck> extract(Class<?> clazz, Object actual) {
+                    return asList(new ExecutableCheck(fieldNameForReport, actualArgument(lambdajGetterMethodSelector).evaluate(actual), asList(matcher)));
                 }
             });
         }
@@ -177,15 +164,16 @@ public class ObjectMatcher<T> extends ReportingMatcher<T> {
         }
 
         public ObjectMatcher<T> is(final Matcher<U> matcher) {
-            return addPlannedCheckExtractor(new PlannedCheckExtractor() {
+            return addExecutableCheckExtractor(new ExecutableCheckExtractor() {
                 @Override
-                public void addChecksToPlan(CheckPlan plan, Object actual) {
+                public Collection<ExecutableCheck> extract(Class<?> clazz, Object actual) {
                     try {
                         Field field = actual.getClass().getField(fieldNameForValueExtraction);
                         field.setAccessible(true);
-                        plan.addCheck(fieldNameForReport, (U)field.get(actual), matcher);
+                        return asList(new ExecutableCheck(fieldNameForReport, field.get(actual), asList(matcher)));
                     } catch (NoSuchFieldException | IllegalAccessException ignored) {
                         // FIXME: В отчёте должно отобразиться, что поле не найдено
+                        return null;
                     }
                 }
             });
@@ -201,18 +189,20 @@ public class ObjectMatcher<T> extends ReportingMatcher<T> {
         }
 
         public ObjectMatcher<T> are(final Matcher<? super Object> matcher) {
-            return addPlannedCheckExtractor(new PlannedCheckExtractor() {
+            return addExecutableCheckExtractor(new ExecutableCheckExtractor() {
                 @Override
-                public void addChecksToPlan(CheckPlan plan, Object actual) {
+                public Collection<ExecutableCheck> extract(Class<?> clazz, Object actual) {
+                    Collection<ExecutableCheck> result = new ArrayList<>();
                     for (Field field : actual.getClass().getFields()) {
                         field.setAccessible(true);
                         if (!isStatic(field.getModifiers()) && fieldNameMatcher.matches(field.getName())) {
                             try {
-                                plan.addCheck(field.getName(), field.get(actual), matcher);
+                                result.add(new ExecutableCheck(field.getName(), field.get(actual), asList(matcher)));
                             } catch (IllegalAccessException ignored) {
                             }
                         }
                     }
+                    return result;
                 }
             });
         }

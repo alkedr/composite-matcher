@@ -1,5 +1,14 @@
 package alkedr.matchers.reporting.reporters;
 
+import alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
+import alkedr.matchers.reporting.checks.ExecutedSimpleCheck;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
+
+import static java.lang.String.format;
+import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
+
 public final class PlainTextReporter {
     private PlainTextReporter() {}
 

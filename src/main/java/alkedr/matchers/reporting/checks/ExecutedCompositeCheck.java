@@ -10,6 +10,9 @@ import java.util.*;
 import static java.util.Collections.*;
 import static java.util.Collections.unmodifiableList;
 
+/**
+ * Хранит информацию о запуске ReportingMatcher'а
+ */
 public class ExecutedCompositeCheck {
     @Nullable private final String actualValueAsString;
     @NotNull private final Map<String, ExecutedCompositeCheck> valueNameToInnerCompositeCheck = new LinkedHashMap<>(); // сюда попадают ReportingMatcher'ы, если их несколько, то мёржатся
@@ -23,8 +26,11 @@ public class ExecutedCompositeCheck {
         valueNameToInnerCompositeCheck.put(name, check);
     }
 
-    public void addSimpleCheck(ExecutedSimpleCheck check) {
-        innerSimpleChecks.add(check);
+    public void addSimpleCheck(String name, String valueAsString, ExecutedSimpleCheck check) {
+        if (!valueNameToInnerCompositeCheck.containsKey(name)) {
+            valueNameToInnerCompositeCheck.put(name, new ExecutedCompositeCheck(valueAsString));
+        }
+        valueNameToInnerCompositeCheck.get(name).innerSimpleChecks.add(check);
     }
 
     public boolean isSuccessful() {
