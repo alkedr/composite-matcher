@@ -1,0 +1,115 @@
+<div class="node {{#value.isSuccessful}}passed{{/value.isSuccessful}}{{^value.isSuccessful}}failed{{/value.isSuccessful}}">
+    <div class="name-value">
+        <span class="name">{{key}}</span>
+        <span class="value">{{value.actualValueAsString}}</span>
+    </div>
+    <div class="checks">
+        <table class="matchers" style="border-spacing: 0px;">
+            {{#value.innerSimpleChecks}}
+                {{#mismatchDescription}}
+                    <tr class="matcher failed">
+                        <td class="image">×</td>
+                        <td class="description">{{matcherDescription}}</td>
+                    </tr>
+                    <tr class="matcher failed">
+                        <td></td>
+                        <td class="mismatch-description">{{mismatchDescription}}</td>
+                    </tr>
+                {{/mismatchDescription}}
+                {{^mismatchDescription}}
+                    <tr class="matcher passed">
+                        <td class="image">✔</td>
+                        <td class="description">{{matcherDescription}}</td>
+                    </tr>
+                {{/mismatchDescription}}
+            {{/value.innerSimpleChecks}}
+        </table>
+        <div class="inner-nodes failed">
+            {{#if value.valueNameToInnerCompositeCheckEntries}}
+                {{#value.valueNameToInnerCompositeCheckEntries}}
+                    {{#getValue}}
+                    {{>report}}
+                    {{/getValue}}
+                {{/value.valueNameToInnerCompositeCheckEntries}}
+            {{/if}}
+        </div>
+    </div>
+</div>
+
+
+<!--
+
+<div class="node failed">
+    <div class="name-value">
+        <span class="name">address</span>
+        <span class="value">"ул. Победы, д. 20, кв. 29"</span>
+    </div>
+    <div class="checks">
+        <table class="matchers failed" style="border-spacing: 0px;">
+            <tr class="matcher passed">
+                <td class="image">✔</td>
+                <td class="description">адрес есть в базе данных</td>
+            </tr>
+        </table>
+        <div class="inner-nodes failed">
+            <div class="node failed">
+                <div class="name-value">
+                    <span class="name">toString()</span>
+                    <span class="value">"ул. Победы, д. 20, кв. 29"</span>
+                </div>
+                <div class="checks">
+                    <table class="matchers failed" style="border-spacing: 0px;">
+                        <tr class="matcher passed">
+                            <td class="image">✔</td>
+                            <td class="description">есть дом</td>
+                        </tr>
+
+                        <tr class="matcher passed">
+                            <td class="image">✔</td>
+                            <td class="description">есть улица</td>
+                        </tr>
+
+                        <tr class="matcher failed">
+                            <td class="image">×</td>
+                            <td class="description">есть город</td>
+                        </tr>
+                        <tr class="matcher failed">
+                            <td></td>
+                            <td class="mismatch-description">город отсутствует</td>
+                        </tr>
+                    </table>
+                    <div class="inner-nodes failed">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="inner-nodes failed">
+            <div class="node failed">
+                <div class="name-value">
+                    <span class="name">street</span>
+                    <span class="value">"ул. Победы"</span>
+                </div>
+                <div class="checks">
+                    <table class="matchers failed" style="border-spacing: 0px;">
+                        <tr class="matcher passed">
+                            <td class="image">✔</td>
+                            <td class="description">адрес есть в базе данных</td>
+                        </tr>
+
+                        <tr class="matcher failed">
+                            <td class="image">×</td>
+                            <td class="description">toString возвращает правильный адрес</td>
+                        </tr>
+                        <tr class="matcher failed">
+                            <td></td>
+                            <td class="mismatch-description">отсутствует город</td>
+                        </tr>
+                    </table>
+                    <div class="inner-nodes failed">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+-->

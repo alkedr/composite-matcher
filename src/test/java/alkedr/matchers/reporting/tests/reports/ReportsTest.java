@@ -6,7 +6,11 @@ import org.hamcrest.Matcher;
 import org.junit.Test;
 import ru.yandex.qatools.allure.annotations.Attachment;
 
+import java.io.FileWriter;
+import java.io.IOException;
+
 import static alkedr.matchers.reporting.reporters.HtmlReporter.generateHtmlReport;
+import static ch.lambdaj.Lambda.*;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 @SuppressWarnings("JUnitTestMethodWithNoAssertions")
@@ -15,7 +19,7 @@ public class ReportsTest {
     public void reportsTest() {
         attachReports("Пустой отчёт", new Object(), new ObjectMatcher<>());
 
-        VeryComplexBean on = Lambda.on(VeryComplexBean.class);
+        VeryComplexBean on = on(VeryComplexBean.class);
         attachReports("Сложный отчёт", new VeryComplexBean(),
                 new ObjectMatcher<VeryComplexBean>()
                         .property(on.getCorrect()).is(correctComplexBean())
@@ -23,8 +27,20 @@ public class ReportsTest {
         );
     }
 
+    @Test
+    public void fastReportsTest() throws IOException {
+        VeryComplexBean on = on(VeryComplexBean.class);
+        ObjectMatcher<VeryComplexBean> matcher = new ObjectMatcher<VeryComplexBean>()
+                .property(on.getCorrect()).is(correctComplexBean())
+                .property(on.getIncorrect()).is(correctComplexBean());
+        matcher.matches(new VeryComplexBean());
+        try (FileWriter fileWriter = new FileWriter("/home/alkedr/programming/composite-matcher/example-report.html")) {
+            fileWriter.write(generateHtmlReport(matcher.getLastCheckResult()));
+        }
+    }
+
     private static Matcher<ComplexBean> correctComplexBean() {
-        ComplexBean on = Lambda.on(ComplexBean.class);
+        ComplexBean on = on(ComplexBean.class);
         return new ObjectMatcher<ComplexBean>()
                 .property("booleanPropertyWithFancyName", on.getBooleanProperty()).is(equalTo(true))
                 .property(on.getIntProperty()).is(equalTo(1))

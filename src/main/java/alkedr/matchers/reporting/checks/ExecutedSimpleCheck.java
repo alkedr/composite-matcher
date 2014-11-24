@@ -2,18 +2,23 @@ package alkedr.matchers.reporting.checks;
 
 import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static alkedr.matchers.reporting.checks.CheckStatus.*;
 
 /**
  * Хранит информацию о запуске обычного Matcher'а
  */
 public class ExecutedSimpleCheck {
+    @NotNull private final CheckStatus status;
     @Nullable private final String matcherDescription;
     @Nullable private final String mismatchDescription;
 
     public ExecutedSimpleCheck(boolean matches, Matcher<?> matcher, Object actual) {
         matcherDescription = StringDescription.toString(matcher);
         mismatchDescription = matches ? null : getMismatchDescription(matcher, actual);
+        status = matches ? PASSED : FAILED;
     }
 
     private static String getMismatchDescription(Matcher<?> matcher, Object actualValue) {
@@ -22,8 +27,9 @@ public class ExecutedSimpleCheck {
         return stringMismatchDescription.toString();
     }
 
-    public boolean isSuccessful() {
-        return mismatchDescription == null;
+    @NotNull
+    public CheckStatus getStatus() {
+        return status;
     }
 
     @Nullable
