@@ -5,10 +5,10 @@ import org.hamcrest.Matcher;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static java.util.Collections.*;
+import static java.util.Collections.unmodifiableCollection;
 
 /**
- * Хранит информацию о проверке конкретного поля/проперти конкретного объекта
+ * Хранит информацию о запланированной проверке конкретного поля/проперти конкретного объекта
  */
 public class ExecutableCheck {
     private final String name;

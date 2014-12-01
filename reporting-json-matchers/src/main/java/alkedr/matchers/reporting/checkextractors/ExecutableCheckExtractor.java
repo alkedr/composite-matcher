@@ -1,4 +1,4 @@
-package alkedr.matchers.reporting.extractors;
+package alkedr.matchers.reporting.checkextractors;
 
 import alkedr.matchers.reporting.checks.ExecutableCheck;
 

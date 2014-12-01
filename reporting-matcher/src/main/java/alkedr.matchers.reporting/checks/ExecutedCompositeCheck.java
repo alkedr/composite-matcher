@@ -1,17 +1,13 @@
 package alkedr.matchers.reporting.checks;
 
-import org.hamcrest.Matcher;
-import org.hamcrest.StringDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static alkedr.matchers.reporting.checks.CheckStatus.FAILED;
-import static alkedr.matchers.reporting.checks.CheckStatus.PASSED;
-import static alkedr.matchers.reporting.checks.CheckStatus.SKIPPED;
-import static java.util.Collections.*;
+import static alkedr.matchers.reporting.checks.CheckStatus.*;
 import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.unmodifiableMap;
 
 /**
  * Хранит информацию о запуске {@link alkedr.matchers.reporting.ReportingMatcher}'а
@@ -28,9 +24,19 @@ public class ExecutedCompositeCheck {
     // сюда попадают другие матчеры
     @NotNull private final List<ExecutedSimpleCheck> innerSimpleChecks = new ArrayList<>();
 
+    public ExecutedCompositeCheck(@Nullable String actualValueAsString, @NotNull CheckStatus status,
+                                  @NotNull Iterable<? extends Map.Entry<String, ExecutedCompositeCheck>> valueNameToInnerCompositeCheck,
+                                  @NotNull Collection<ExecutedSimpleCheck> innerSimpleChecks) {
+        this.actualValueAsString = actualValueAsString;
+        this.status = status;
+        for (Map.Entry<String, ExecutedCompositeCheck> entry : valueNameToInnerCompositeCheck) {
+            this.valueNameToInnerCompositeCheck.put(entry.getKey(), entry.getValue());
+        }
+        this.innerSimpleChecks.addAll(innerSimpleChecks);
+    }
 
     public ExecutedCompositeCheck(@Nullable String actualValueAsString) {
-        this.actualValueAsString = actualValueAsString;
+        this(actualValueAsString, SKIPPED, new ArrayList<Map.Entry<String, ExecutedCompositeCheck>>(), new ArrayList<ExecutedSimpleCheck>());
     }
 
     public void addCompositeCheck(String name, ExecutedCompositeCheck check) {
@@ -47,7 +53,15 @@ public class ExecutedCompositeCheck {
         if (!valueNameToInnerCompositeCheck.containsKey(name)) {
             valueNameToInnerCompositeCheck.put(name, new ExecutedCompositeCheck(valueAsString));
         }
+        valueNameToInnerCompositeCheck.get(name).status = check.getStatus();
         valueNameToInnerCompositeCheck.get(name).innerSimpleChecks.add(check);
+    }
+
+    public void addSimpleCheck(ExecutedSimpleCheck check) {
+        if ((status == SKIPPED) || (status == PASSED)) {
+            status = check.getStatus();
+        }
+        innerSimpleChecks.add(check);
     }
 
 

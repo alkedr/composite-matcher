@@ -1,4 +1,4 @@
-package tests.reports;
+package reports;
 
 import alkedr.matchers.reporting.ObjectMatcher;
 import org.hamcrest.Matcher;
@@ -9,7 +9,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import static alkedr.matchers.reporting.reporters.HtmlReporter.generateHtmlReport;
-import static ch.lambdaj.Lambda.*;
+import static ch.lambdaj.Lambda.on;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 @SuppressWarnings("JUnitTestMethodWithNoAssertions")

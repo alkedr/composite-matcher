@@ -1,21 +1,23 @@
 package alkedr.matchers.reporting;
 
+import alkedr.matchers.reporting.checkextractors.ExecutableCheckExtractor;
 import alkedr.matchers.reporting.checks.ExecutableCheck;
-import alkedr.matchers.reporting.extractors.ExecutableCheckExtractor;
 import ch.lambdaj.function.argument.Argument;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
 
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static alkedr.matchers.reporting.extractors.ExtractorsUtils.extractChecks;
 import static ch.lambdaj.function.argument.ArgumentsFactory.actualArgument;
 import static java.beans.Introspector.getBeanInfo;
 import static java.lang.reflect.Modifier.isStatic;
 import static java.util.Arrays.asList;
-import static java.util.Collections.*;
+import static java.util.Collections.unmodifiableCollection;
 import static org.hamcrest.Matchers.any;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -23,8 +25,7 @@ import static org.hamcrest.Matchers.equalTo;
  * Два метода использования: построение с пом. fluent API и написание обёртки с определением своего fluent API
  * TODO: класс, упрощающий написание обёртки
  */
-public class ObjectMatcher<T> extends ReportingMatcher<T> {
-    private boolean includeUncheckedFields = true;
+public class ObjectMatcher<T> extends ValueExtractingMatcher<T> {
     private final Collection<ExecutableCheckExtractor> executableCheckExtractors = new ArrayList<>();
 
     public ObjectMatcher(Class<T> tClass) {
@@ -33,11 +34,40 @@ public class ObjectMatcher<T> extends ReportingMatcher<T> {
 
 
     public ObjectMatcher<T> includeUncheckedFields() {
-        return this;
+        return addExecutableCheckExtractor(new ExecutableCheckExtractor() {
+            @Override
+            public Collection<ExecutableCheck> extract(Class<?> clazz, Object actual) {
+                Collection<ExecutableCheck> result = new ArrayList<>();
+                for (Field field : clazz.getFields()) {
+                    if (!isStatic(field.getModifiers())) {
+                        field.setAccessible(true);
+                        try {
+                            result.add(new ExecutableCheck(field.getName(), field.get(actual), new ArrayList<Matcher<?>>()));
+                        } catch (IllegalAccessException ignored) {
+                        }
+                    }
+                }
+                return result;
+            }
+        });
     }
 
     public ObjectMatcher<T> includeUncheckedProperties() {
-        return this;
+        return addExecutableCheckExtractor(new ExecutableCheckExtractor() {
+            @Override
+            public Collection<ExecutableCheck> extract(Class<?> clazz, Object actual) {
+                Collection<ExecutableCheck> result = new ArrayList<>();
+                try {
+                    for (PropertyDescriptor pd : getBeanInfo(clazz).getPropertyDescriptors()) {
+                        pd.getReadMethod().setAccessible(true);
+                        result.add(new ExecutableCheck(pd.getName(), pd.getReadMethod().invoke(actual), new ArrayList<Matcher<?>>()));
+                    }
+                } catch (InvocationTargetException | IntrospectionException | IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+                return result;
+            }
+        });
     }
 
 
@@ -101,34 +131,11 @@ public class ObjectMatcher<T> extends ReportingMatcher<T> {
 
     @NotNull
     @Override
-    public Collection<ExecutableCheck> getExecutableCheckExtractors(Class<?> clazz, Object actual) {
-        return extractChecks(unmodifiableCollection(executableCheckExtractors), clazz, actual);
+    protected Collection<ExecutableCheckExtractor> getExecutableCheckExtractors(Class<?> clazz, Object actual) {
+        return unmodifiableCollection(executableCheckExtractors);
     }
 
-/*
-    private void addAllFields(T actualValue) {
-        for (Field field : actualValue.getClass().getFields()) {
-            if (!isStatic(field.getModifiers())) {
-                field.setAccessible(true);
-                try {
-                    plan.addValue(field.getName(), field.get(actualValue));
-                } catch (IllegalAccessException ignored) {
-                }
-            }
-        }
-    }
 
-    private void addAllProperties(T actualValue) {
-        try {
-            for (PropertyDescriptor pd : getBeanInfo(actualValue.getClass()).getPropertyDescriptors()) {
-                pd.getReadMethod().setAccessible(true);
-                plan.addValue(pd.getName(), pd.getReadMethod().invoke(actualValue));
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-*/
 
     public class PropertyCheckAdder<U> {
         private final String fieldNameForReport;

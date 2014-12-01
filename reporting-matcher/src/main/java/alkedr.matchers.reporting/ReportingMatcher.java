@@ -1,6 +1,5 @@
 package alkedr.matchers.reporting;
 
-import alkedr.matchers.reporting.checks.CheckStatus;
 import alkedr.matchers.reporting.checks.ExecutableCheck;
 import alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
 import alkedr.matchers.reporting.checks.ExecutedSimpleCheck;
@@ -9,9 +8,12 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
-import static alkedr.matchers.reporting.checks.CheckStatus.*;
+import static alkedr.matchers.reporting.checks.CheckStatus.FAILED;
 
 public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
     private final Class<T> tClass;
@@ -22,7 +24,7 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
     }
 
 
-    protected abstract Collection<ExecutableCheck> getExecutableCheckExtractors(Class<?> clazz, Object actual);
+    protected abstract Collection<ExecutableCheck> getExecutableChecks(Class<?> clazz, Object actual);
 
 
     /**
@@ -37,7 +39,7 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
 
     @Override
     public boolean matches(Object item) {
-        lastCheckResult = executePlannedChecks(item, mergePlannedChecksWithSameNamesPreservingOrder(getExecutableCheckExtractors(tClass, item)));
+        lastCheckResult = executePlannedChecks(item, mergePlannedChecksWithSameNamesPreservingOrder(getExecutableChecks(tClass, item)));
         INNER_CHECK_RESULT.set(lastCheckResult);
         return lastCheckResult.getStatus() != FAILED;
     }
@@ -77,6 +79,10 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
     }
 
     private static void executePlannedCheck(ExecutableCheck executableCheck, ExecutedCompositeCheck result) {
+        if (executableCheck.getMatchers().isEmpty()) {
+            result.addCompositeCheck(executableCheck.getName(), new ExecutedCompositeCheck(String.valueOf(executableCheck.getValue())));
+            return;
+        }
         for (Matcher<?> matcher : executableCheck.getMatchers()) {
             INNER_CHECK_RESULT.remove();
             boolean matcherResult = matcher.matches(executableCheck.getValue());
