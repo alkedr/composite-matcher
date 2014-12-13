@@ -9,7 +9,6 @@ import org.junit.runners.Parameterized;
 
 import java.util.*;
 
-import static alkedr.matchers.reporting.CompositeMatcher2.CheckStatus.*;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -17,11 +16,11 @@ import static org.junit.Assert.assertThat;
 @RunWith(Parameterized.class)
 public class CompositeMatcherTest {
     private static final Object OBJECT = new Object();
-    private final CompositeMatcher2<Object> matcher;
-    private final CompositeMatcher2.ExecutedCompositeCheck expectedExecutedCompositeCheck;
+    private final CompositeMatcher<Object> matcher;
+    private final CompositeMatcher.ExecutedCompositeCheck expectedExecutedCompositeCheck;
 
-    public CompositeMatcherTest(String testName, CompositeMatcher2<Object> matcher,
-                                CompositeMatcher2.ExecutedCompositeCheck expectedExecutedCompositeCheck) {
+    public CompositeMatcherTest(String testName, CompositeMatcher<Object> matcher,
+                                CompositeMatcher.ExecutedCompositeCheck expectedExecutedCompositeCheck) {
         this.matcher = matcher;
         this.expectedExecutedCompositeCheck = expectedExecutedCompositeCheck;
     }
@@ -31,85 +30,78 @@ public class CompositeMatcherTest {
         return asList(new Object[][]{
                 {
                         "0 проверок",
-                        new CompositeMatcher2<Object>() {
+                        new CompositeMatcher<Object>() {
                             @Override
                             protected void check(@Nullable Object actualValue) {
                             }
                         },
-                        new CompositeMatcher2.ExecutedCompositeCheck(
+                        new CompositeMatcher.ExecutedCompositeCheck(
                                 OBJECT.toString(),
-                                SKIPPED,
-                                new ArrayList<Map.Entry<String, CompositeMatcher2.ExecutedCompositeCheck>>(),
-                                new ArrayList<CompositeMatcher2.ExecutedSimpleCheck>()
+                                new ArrayList<Map.Entry<String, CompositeMatcher.ExecutedCompositeCheck>>(),
+                                new ArrayList<CompositeMatcher.ExecutedSimpleCheck>()
                         ),
                 },
                 {
                         "1 успешная проверка поля",
-                        new CompositeMatcher2<Object>() {
+                        new CompositeMatcher<Object>() {
                             @Override
                             protected void check(@Nullable Object actualValue) {
                                 checkThat("intField", 1, equalTo(1));
                             }
                         },
-                        new CompositeMatcher2.ExecutedCompositeCheck(
+                        new CompositeMatcher.ExecutedCompositeCheck(
                                 OBJECT.toString(),
-                                PASSED,
                                 asList(new AbstractMap.SimpleEntry<>(
                                         "intField",
-                                        new CompositeMatcher2.ExecutedCompositeCheck(
+                                        new CompositeMatcher.ExecutedCompositeCheck(
                                                 "1",
-                                                PASSED,
-                                                new ArrayList<Map.Entry<String, CompositeMatcher2.ExecutedCompositeCheck>>(),
-                                                asList(new CompositeMatcher2.ExecutedSimpleCheck(PASSED, "<1>", null))
+                                                new ArrayList<Map.Entry<String, CompositeMatcher.ExecutedCompositeCheck>>(),
+                                                asList(new CompositeMatcher.ExecutedSimpleCheck("<1>", null))
                                         )
                                 )),
-                                new ArrayList<CompositeMatcher2.ExecutedSimpleCheck>()
+                                new ArrayList<CompositeMatcher.ExecutedSimpleCheck>()
                         ),
                 },
                 {
                         "1 неуспешная проверка поля",
-                        new CompositeMatcher2<Object>() {
+                        new CompositeMatcher<Object>() {
                             @Override
                             protected void check(@Nullable Object actualValue) {
                                 checkThat("intField", 1, equalTo(2));
                             }
                         },
-                        new CompositeMatcher2.ExecutedCompositeCheck(
+                        new CompositeMatcher.ExecutedCompositeCheck(
                                 OBJECT.toString(),
-                                FAILED,
                                 asList(new AbstractMap.SimpleEntry<>(
                                         "intField",
-                                        new CompositeMatcher2.ExecutedCompositeCheck(
+                                        new CompositeMatcher.ExecutedCompositeCheck(
                                                 "1",
-                                                FAILED,
-                                                new ArrayList<Map.Entry<String, CompositeMatcher2.ExecutedCompositeCheck>>(),
-                                                asList(new CompositeMatcher2.ExecutedSimpleCheck(FAILED, "<2>", "was <1>"))
+                                                new ArrayList<Map.Entry<String, CompositeMatcher.ExecutedCompositeCheck>>(),
+                                                asList(new CompositeMatcher.ExecutedSimpleCheck("<2>", "was <1>"))
                                         )
                                 )),
-                                new ArrayList<CompositeMatcher2.ExecutedSimpleCheck>()
+                                new ArrayList<CompositeMatcher.ExecutedSimpleCheck>()
                         ),
                 },
                 {
                         "1 поле без проверок",
-                        new CompositeMatcher2<Object>() {
+                        new CompositeMatcher<Object>() {
                             @Override
                             protected void check(@Nullable Object actualValue) {
-                                ensureFieldExists("intField", 1);
+                                checkThat("intField", 1);
                             }
                         },
-                        new CompositeMatcher2.ExecutedCompositeCheck(
+                        new CompositeMatcher.ExecutedCompositeCheck(
                                 OBJECT.toString(),
-                                SKIPPED,
                                 asList(new AbstractMap.SimpleEntry<>(
                                         "intField",
-                                        new CompositeMatcher2.ExecutedCompositeCheck(
+                                        new CompositeMatcher.ExecutedCompositeCheck(
                                                 "1",
-                                                SKIPPED,
-                                                new ArrayList<Map.Entry<String, CompositeMatcher2.ExecutedCompositeCheck>>(),
-                                                new ArrayList<CompositeMatcher2.ExecutedSimpleCheck>()
+                                                new ArrayList<Map.Entry<String, CompositeMatcher.ExecutedCompositeCheck>>(),
+                                                new ArrayList<CompositeMatcher.ExecutedSimpleCheck>()
                                         )
                                 )),
-                                new ArrayList<CompositeMatcher2.ExecutedSimpleCheck>()
+                                new ArrayList<CompositeMatcher.ExecutedSimpleCheck>()
                         ),
                 },
         });
@@ -118,7 +110,7 @@ public class CompositeMatcherTest {
     @Test
     public void test() {
         boolean actualMatches = matcher.matches(OBJECT);
-        CompositeMatcher2.ExecutedCompositeCheck actualExecutedCompositeCheck = matcher.getLastCheckResult();
+        CompositeMatcher.ExecutedCompositeCheck actualExecutedCompositeCheck = matcher.getLastCheckResult();
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String actualJson = gson.toJson(actualExecutedCompositeCheck);

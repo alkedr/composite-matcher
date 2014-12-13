@@ -33,9 +33,9 @@ public class IterableMatcher<T extends Iterable<U>, U> extends ValueExtractingMa
         return this;
     }
 
-    public IterableMatcher<T, U> allElements(Matcher<T> elementMatcher) {
-        return elementWithIndex(any(Integer.class)).is(elementMatcher);
-    }
+//    public IterableMatcher<T, U> allElements(Matcher<T> elementMatcher) {
+//        return elementWithIndex(any(Integer.class)).is(elementMatcher);
+//    }
 
     public IterableMatcher<T, U> size(Matcher<Integer> sizeMatcher) {
         return this;

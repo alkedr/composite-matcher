@@ -14,7 +14,7 @@ import static org.hamcrest.Matchers.any;
  *
  * С пом. fluent API любому элементу можно задать сколько угодно матчеров
  */
-public class OrderedCollectionMatcher<T extends Collection<U>, U> extends CompositeMatcher2<T> {
+public class OrderedCollectionMatcher<T extends Collection<U>, U> extends CompositeMatcher<T> {
     private final Collection<ElementGroup<U>> elementGroups = new ArrayList<>();
 
     public OrderedCollectionMatcher<T, U> firstElementIs(Matcher<U> elementMatcher) {
@@ -53,21 +53,22 @@ public class OrderedCollectionMatcher<T extends Collection<U>, U> extends Compos
 
 
     public static class GroupWithMultipleElementsBuilder<T extends Collection<U>, U> {
-        public OrderedCollectionMatcher<T, U> elementsAre(Matcher<U> elementMatcher) {
-
-        }
+//        public OrderedCollectionMatcher<T, U> elementsAre(Matcher<U> elementMatcher) {
+//
+//        }
     }
 
 
 
 
     public OrderedCollectionMatcher<T, U> elements(int count, Matcher<U> elementMatcher) {
-        elementGroups.add(new ElementGroup<>(count, elementMatcher));
+//        elementGroups.add(new ElementGroup<>(count, elementMatcher));
         return this;
     }
 
     public OrderedCollectionMatcher<T, U> elements(Matcher<U> elementMatcher) {
-        return elements(any(Integer.class), elementMatcher);
+        return this;
+//        return elements(any(Integer.class), elementMatcher);
     }
 
     public OrderedCollectionMatcher<T, U> element(Matcher<U> elementMatcher) {

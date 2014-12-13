@@ -32,14 +32,14 @@ public final class HtmlReporter {
                         "<span class='value'>" + escapeHtml4(check.getActualValueAsString()) + "</span>" +
                     "</div>" +
                     "<div class='checks'>" +
-                        "<table class='matchers' style='border-spacing: 0px;'>" + generateMatcherRows(check) + "</table>" +
-                        "<div class='inner-nodes failed'>" + generateInnerNodeDivs(check) + "</div>" +
+                        generateMatchersTable(check) +
+                        generateInnerNodesDiv(check) +
                     "</div>" +
                 "</div>";
     }
 
-    private static String generateMatcherRows(ExecutedCompositeCheck check) {
-        StringBuilder stringBuilder = new StringBuilder();
+    private static String generateMatchersTable(ExecutedCompositeCheck check) {
+        StringBuilder stringBuilder = new StringBuilder("<table class='matchers' style='border-spacing: 0px;'>");
         for (ExecutedSimpleCheck simpleCheck : check.getInnerSimpleChecks()) {
             if (simpleCheck.getStatus() == FAILED) {
                 stringBuilder
@@ -56,15 +56,17 @@ public final class HtmlReporter {
                         .append("</td></tr>");
             }
         }
+        stringBuilder.append("</table>");
         return stringBuilder.toString();
     }
 
-    private static String generateInnerNodeDivs(ExecutedCompositeCheck check) {
-        StringBuilder sb = new StringBuilder();
+    private static String generateInnerNodesDiv(ExecutedCompositeCheck check) {
+        StringBuilder stringBuilder = new StringBuilder("<div class='inner-nodes'>");
         for (Map.Entry<String, ExecutedCompositeCheck> entry : check.getValueNameToInnerCompositeCheck().entrySet()) {
-            sb.append(generateExecutedCompositeCheckReport(entry.getKey(), entry.getValue()));
+            stringBuilder.append(generateExecutedCompositeCheckReport(entry.getKey(), entry.getValue()));
         }
-        return format("<div class='inner-nodes'>%s</div>", sb);
+        stringBuilder.append("</div>");
+        return stringBuilder.toString();
     }
 
     private static String resourceAsString(String resourceName) {

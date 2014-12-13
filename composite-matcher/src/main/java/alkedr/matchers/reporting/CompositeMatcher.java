@@ -9,11 +9,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static alkedr.matchers.reporting.CompositeMatcher2.CheckStatus.*;
+import static alkedr.matchers.reporting.CompositeMatcher.ExecutedCheckStatus.*;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableMap;
 
-public abstract class CompositeMatcher2<T> extends BaseMatcher<T> {
+public abstract class CompositeMatcher<T> extends BaseMatcher<T> {
     private ExecutedCompositeCheck lastCheckResult = null;
     private T currentActualValue = null;
 
@@ -22,22 +22,49 @@ public abstract class CompositeMatcher2<T> extends BaseMatcher<T> {
 
 
     protected <U> void checkThat(@NotNull String name, @Nullable U value, @NotNull Matcher<? super U> matcher) {
-        lastCheckResult.addCheckResult(name, value, executeCheck(value, matcher));
+        executeCheck(getOrCreateInnerCheck(name, value), value, matcher);
+    }
+
+    protected <U> CompositeMatcher<T> checkThat(@NotNull String name, @Nullable U value) {
+        getOrCreateInnerCheck(name, value);
+        return this;
     }
 
     protected void checkThat(@NotNull Matcher<? super T> matcher) {
-        lastCheckResult.addCheckResult(executeCheck(currentActualValue, matcher));
+        executeCheck(lastCheckResult, currentActualValue, matcher);
     }
 
-    protected static <U> ExecutedCheck executeCheck(@Nullable U value, @NotNull Matcher<? super U> matcher) {
+
+    private static <U> void executeCheck(@NotNull ExecutedCompositeCheck storage, @Nullable U value, @NotNull Matcher<? super U> matcher) {
         INNER_CHECK_RESULT.remove();
         boolean matcherResult = matcher.matches(value);
-        return (INNER_CHECK_RESULT.get() == null) ? new ExecutedSimpleCheck(matcherResult, matcher, value) : INNER_CHECK_RESULT.get();
+        if (INNER_CHECK_RESULT.get() == null) {
+            storage.simpleChecks.add(new ExecutedSimpleCheck(matcherResult, matcher, value));
+        } else {
+            mergeCompositeCheckIntoAnother(storage, INNER_CHECK_RESULT.get());
+        }
     }
 
-    protected <U> CompositeMatcher2<T> ensureFieldExists(String name, U value) {
-        lastCheckResult.getOrCreateCompositeCheckForField(name, value);
-        return this;
+    private static void mergeCompositeCheckIntoAnother(ExecutedCompositeCheck storage, ExecutedCompositeCheck newCheck) {
+        storage.simpleChecks.addAll(newCheck.simpleChecks);
+        for (Map.Entry<String, ExecutedCompositeCheck> entry : newCheck.innerCompositeChecks.entrySet()) {
+            if (storage.innerCompositeChecks.containsKey(entry.getKey())) {
+                mergeCompositeCheckIntoAnother(storage.innerCompositeChecks.get(entry.getKey()), entry.getValue());
+            } else {
+                storage.innerCompositeChecks.put(entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+    private <U> ExecutedCompositeCheck getOrCreateInnerCheck(String name, U value) {
+        ExecutedCompositeCheck existingInnerCheck = lastCheckResult.innerCompositeChecks.get(name);
+        if (existingInnerCheck == null) {
+            ExecutedCompositeCheck newInnerCheck = new ExecutedCompositeCheck(String.valueOf(value));
+            lastCheckResult.innerCompositeChecks.put(name, newInnerCheck);
+            return newInnerCheck;
+        } else {
+            return existingInnerCheck;
+        }
     }
 
 
@@ -68,7 +95,7 @@ public abstract class CompositeMatcher2<T> extends BaseMatcher<T> {
 
 
 
-    public enum CheckStatus {
+    public enum ExecutedCheckStatus {
         PASSED(true),
         FAILED(false),
         SKIPPED(true),
@@ -76,7 +103,7 @@ public abstract class CompositeMatcher2<T> extends BaseMatcher<T> {
 
         private final boolean isSuccessful;
 
-        CheckStatus(boolean isSuccessful) {
+        ExecutedCheckStatus(boolean isSuccessful) {
             this.isSuccessful = isSuccessful;
         }
 
@@ -86,31 +113,24 @@ public abstract class CompositeMatcher2<T> extends BaseMatcher<T> {
     }
 
     public interface ExecutedCheck {
-        CheckStatus getStatus();
-        void storeInto(@NotNull ExecutedCompositeCheck check);
+        ExecutedCheckStatus getStatus();
     }
 
     /**
-     * Хранит информацию о запуске {@link alkedr.matchers.reporting.CompositeMatcher2}'а
+     * Хранит информацию о запуске {@link CompositeMatcher}'а
      */
     public static class ExecutedCompositeCheck implements ExecutedCheck {
         @NotNull private final String actualValueAsString;
-
-        // статус меняется по мере добавления проверок методами addSimpleCheck и addCompositeCheck
-        @NotNull private CheckStatus status = SKIPPED;
-
         // сюда попадают матчеры, применяемые к полям, если несколько метчеров для одного поля, то мёржатся
         @NotNull private final Map<String, ExecutedCompositeCheck> innerCompositeChecks = new LinkedHashMap<>();
-
         // сюда попадают матчеры, применяемые ко всему actual
         @NotNull private final List<ExecutedSimpleCheck> simpleChecks = new ArrayList<>();
 
 
-        public ExecutedCompositeCheck(@NotNull String actualValueAsString, @NotNull CheckStatus status,
+        public ExecutedCompositeCheck(@NotNull String actualValueAsString,
                                       @NotNull Iterable<? extends Map.Entry<String, ExecutedCompositeCheck>> innerCompositeChecks,
                                       @NotNull Collection<ExecutedSimpleCheck> simpleChecks) {
             this.actualValueAsString = actualValueAsString;
-            this.status = status;
             for (Map.Entry<String, ExecutedCompositeCheck> entry : innerCompositeChecks) {
                 this.innerCompositeChecks.put(entry.getKey(), entry.getValue());
             }
@@ -118,26 +138,7 @@ public abstract class CompositeMatcher2<T> extends BaseMatcher<T> {
         }
 
         public ExecutedCompositeCheck(@NotNull String actualValueAsString) {
-            this(actualValueAsString, SKIPPED, new ArrayList<Map.Entry<String, ExecutedCompositeCheck>>(), new ArrayList<ExecutedSimpleCheck>());
-        }
-
-
-        @Override
-        public void storeInto(@NotNull ExecutedCompositeCheck check) {
-            if ((check.status == SKIPPED) || ((check.status == PASSED) && (status == FAILED))) {
-                check.status = status;
-            }
-//            if (!check.getActualValueAsString().equals(actualValueAsString)) {
-//                throw new RuntimeException("");
-//            }
-            check.simpleChecks.addAll(simpleChecks);
-            for (Map.Entry<String, ExecutedCompositeCheck> entry : innerCompositeChecks.entrySet()) {
-                if (check.innerCompositeChecks.containsKey(entry.getKey())) {
-                    check.innerCompositeChecks.get(entry.getKey()).addCheckResult(entry.getValue());
-                } else {
-                    check.innerCompositeChecks.put(entry.getKey(), entry.getValue());
-                }
-            }
+            this(actualValueAsString, new ArrayList<Map.Entry<String, ExecutedCompositeCheck>>(), new ArrayList<ExecutedSimpleCheck>());
         }
 
 
@@ -148,8 +149,17 @@ public abstract class CompositeMatcher2<T> extends BaseMatcher<T> {
 
         @Override
         @NotNull
-        public CheckStatus getStatus() {
-            return status;
+        public ExecutedCheckStatus getStatus() {
+            boolean hasPassed = false;
+            for (ExecutedCompositeCheck check : innerCompositeChecks.values()) {
+                if (check.getStatus() == FAILED) return FAILED;
+                if (check.getStatus() == PASSED) hasPassed = true;
+            }
+            for (ExecutedSimpleCheck check : simpleChecks) {
+                if (check.getStatus() == FAILED) return FAILED;
+                if (check.getStatus() == PASSED) hasPassed = true;
+            }
+            return hasPassed ? PASSED : SKIPPED;
         }
 
         @NotNull
@@ -161,60 +171,30 @@ public abstract class CompositeMatcher2<T> extends BaseMatcher<T> {
         public List<ExecutedSimpleCheck> getSimpleChecks() {
             return unmodifiableList(simpleChecks);
         }
-
-
-        public <U> void addCheckResult(String name, @Nullable U value, ExecutedCheck executedCheck) {
-            executedCheck.storeInto(getOrCreateCompositeCheckForField(name, value));
-            if ((status == SKIPPED) || ((status == PASSED) && (executedCheck.getStatus() == FAILED))) {
-                status = executedCheck.getStatus();
-            }
-        }
-
-        public void addCheckResult(ExecutedCheck executedCheck) {
-            executedCheck.storeInto(this);
-        }
-
-        private <U> ExecutedCompositeCheck getOrCreateCompositeCheckForField(String name, U value) {
-            ExecutedCompositeCheck executedCompositeCheck = new ExecutedCompositeCheck(String.valueOf(value));
-            innerCompositeChecks.put(name, executedCompositeCheck);
-            return executedCompositeCheck;
-        }
     }
 
     /**
      * Хранит информацию о запуске обычного Matcher'а
      */
     public static class ExecutedSimpleCheck implements ExecutedCheck {
-        @NotNull private final CheckStatus status;
         @Nullable private final String matcherDescription;
         @Nullable private final String mismatchDescription;
 
         public ExecutedSimpleCheck(boolean matches, Matcher<?> matcher, Object actual) {
             matcherDescription = StringDescription.toString(matcher);
             mismatchDescription = matches ? null : getMismatchDescription(matcher, actual);
-            status = matches ? PASSED : FAILED;
         }
 
-        public ExecutedSimpleCheck(@NotNull CheckStatus status, @Nullable String matcherDescription, @Nullable String mismatchDescription) {
-            this.status = status;
+        public ExecutedSimpleCheck(@Nullable String matcherDescription, @Nullable String mismatchDescription) {
             this.matcherDescription = matcherDescription;
             this.mismatchDescription = mismatchDescription;
         }
 
 
         @Override
-        public void storeInto(@NotNull ExecutedCompositeCheck check) {
-            if ((check.status == SKIPPED) || ((check.status == PASSED) && (status == FAILED))) {
-                check.status = status;
-            }
-            check.simpleChecks.add(this);
-        }
-
-
-        @Override
         @NotNull
-        public CheckStatus getStatus() {
-            return status;
+        public ExecutedCheckStatus getStatus() {
+            return mismatchDescription == null ? PASSED : FAILED;
         }
 
         @Nullable

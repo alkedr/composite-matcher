@@ -1,0 +1,6 @@
+body { font-family: 'Bitstream Vera Sans Mono', 'DejaVu Sans Mono', Monaco, Courier, monospace; }
+.name { font-weight: bold; }
+.name:after { content: ': '; }
+.checks { padding: 0px 0px 0px 20px; }
+.matcher.passed { background-color: #DFF0D8; }
+.matcher.failed { background-color: #F2DEDE; }
