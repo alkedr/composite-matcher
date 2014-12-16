@@ -6,14 +6,13 @@ import alkedr.matchers.reporting.checks.ExecutedSimpleCheck;
 import java.util.Map;
 import java.util.Scanner;
 
-import static alkedr.matchers.reporting.checks.CheckStatus.FAILED;
+import static alkedr.matchers.reporting.checks.ExecutedCheckStatus.FAILED;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringEscapeUtils.*;
 
-public final class HtmlReporter {
-    private HtmlReporter() {}
-
-    public static String generateHtmlReport(ExecutedCompositeCheck check) {
+public class HtmlReporter implements Reporter {
+    @Override
+    public String reportCheck(ExecutedCompositeCheck check) {
         return  "<!DOCTYPE html>" +
                 "<html>" +
                 "<head>" +
@@ -40,7 +39,7 @@ public final class HtmlReporter {
 
     private static String generateMatchersTable(ExecutedCompositeCheck check) {
         StringBuilder stringBuilder = new StringBuilder("<table class='matchers' style='border-spacing: 0px;'>");
-        for (ExecutedSimpleCheck simpleCheck : check.getInnerSimpleChecks()) {
+        for (ExecutedSimpleCheck simpleCheck : check.getSimpleChecks()) {
             if (simpleCheck.getStatus() == FAILED) {
                 stringBuilder
                         .append("<tr class='matcher failed'><td class='image'>×</td><td class='description'>")
@@ -62,7 +61,7 @@ public final class HtmlReporter {
 
     private static String generateInnerNodesDiv(ExecutedCompositeCheck check) {
         StringBuilder stringBuilder = new StringBuilder("<div class='inner-nodes'>");
-        for (Map.Entry<String, ExecutedCompositeCheck> entry : check.getValueNameToInnerCompositeCheck().entrySet()) {
+        for (Map.Entry<String, ExecutedCompositeCheck> entry : check.getInnerCompositeChecks().entrySet()) {
             stringBuilder.append(generateExecutedCompositeCheckReport(entry.getKey(), entry.getValue()));
         }
         stringBuilder.append("</div>");
