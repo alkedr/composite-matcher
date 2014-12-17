@@ -15,11 +15,11 @@ import java.util.Map;
 public abstract class CompositeMatcher<T> extends BaseMatcher<T> {
     private ExecutedCompositeCheck lastCheckResult = null;
     private T currentActualValue = null;
-    private Reporter reporter = new PlainTextReporter();
+    private Reporter<T> reporter = new PlainTextReporter();
     private String mismatchDescription = null;
 
 
-    public void setReporter(Reporter reporter) {
+    public void setReporter(Reporter<T> reporter) {
         this.reporter = reporter;
     }
 
@@ -79,7 +79,7 @@ public abstract class CompositeMatcher<T> extends BaseMatcher<T> {
         currentActualValue = (T)item; // FIXME: safe cast
         check(currentActualValue);
         INNER_CHECK_RESULT.set(lastCheckResult);
-        mismatchDescription = reporter.reportCheck(lastCheckResult);
+        mismatchDescription = reporter.reportCheck(currentActualValue, lastCheckResult);
         return lastCheckResult.getStatus().isSuccessful();
     }
 

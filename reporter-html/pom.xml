@@ -7,7 +7,7 @@
     <parent>
         <artifactId>reporting-matchers-parent</artifactId>
         <groupId>com.github.alkedr.reporting-matchers</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>0.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>reporter-html</artifactId>
@@ -16,7 +16,7 @@
         <dependency>
             <groupId>com.github.alkedr.reporting-matchers</groupId>
             <artifactId>composite-matcher</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -24,54 +24,5 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.3.2</version>
         </dependency>
-
-
-        <dependency>
-            <groupId>ru.yandex.qatools.allure</groupId>
-            <artifactId>allure-junit-adaptor</artifactId>
-            <version>1.4.4</version>
-        </dependency>
     </dependencies>
-
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.14</version>
-                <configuration>
-                    <testFailureIgnore>false</testFailureIgnore>
-                    <argLine>
-                        -javaagent:${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar
-                    </argLine>
-                    <properties>
-                        <property>
-                            <name>listener</name>
-                            <value>ru.yandex.qatools.allure.junit.AllureRunListener</value>
-                        </property>
-                    </properties>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.aspectj</groupId>
-                        <artifactId>aspectjweaver</artifactId>
-                        <version>${aspectj.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-        </plugins>
-    </build>
-
-    <reporting>
-        <excludeDefaults>true</excludeDefaults>
-        <plugins>
-            <plugin>
-                <groupId>ru.yandex.qatools.allure</groupId>
-                <artifactId>allure-maven-plugin</artifactId>
-                <version>2.0</version>
-            </plugin>
-        </plugins>
-    </reporting>
-
 </project>

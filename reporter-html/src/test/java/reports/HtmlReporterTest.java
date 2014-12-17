@@ -23,7 +23,7 @@ public class HtmlReporterTest {
         matcher.matches(bean);
         StringDescription mismatchDescription = new StringDescription();
         matcher.describeMismatch(bean, mismatchDescription);
-        try (FileWriter fileWriter = new FileWriter("/home/alkedr/programming/composite-matcher/example-report.html")) {
+        try (FileWriter fileWriter = new FileWriter("example-report.html")) {
             fileWriter.write(mismatchDescription.toString());
         }
     }
@@ -33,9 +33,9 @@ public class HtmlReporterTest {
             @Override
             protected void check(@Nullable VeryComplexBean actualValue) {
                 checkThat(notNullValue());
-                checkThat("correct", actualValue.correct, correctComplexBean());
-                checkThat("incorrect", actualValue.incorrect, incorrectComplexBean());
-                checkThat("unchecked", actualValue.unchecked);
+                checkThat("correctField", actualValue.correctField, correctComplexBean());
+                checkThat("incorrectField", actualValue.incorrectField, incorrectComplexBean());
+                checkThat("uncheckedField", actualValue.uncheckedField);
             }
         };
     }
@@ -53,24 +53,24 @@ public class HtmlReporterTest {
             @Override
             protected void check(@Nullable ComplexBean actualValue) {
                 checkThat(notNullValue());
-                checkThat("booleanProperty", actualValue.booleanProperty, equalTo(false));
-                checkThat("intProperty", actualValue.intProperty, equalTo(1));
-                checkThat("longProperty", actualValue.longProperty, equalTo(2L));
-                checkThat("stringProperty", actualValue.stringProperty, equalTo(expectedStringPropertyValue));
+                checkThat("booleanField", actualValue.booleanField, equalTo(false));
+                checkThat("intField", actualValue.intField, equalTo(1));
+                checkThat("longField", actualValue.longField, equalTo(2L));
+                checkThat("stringField", actualValue.stringField, equalTo(expectedStringPropertyValue));
             }
         };
     }
 
     private static class VeryComplexBean {
-        private final ComplexBean correct = new ComplexBean();
-        private final ComplexBean incorrect = new ComplexBean();
-        private final ComplexBean unchecked = new ComplexBean();
+        private final ComplexBean correctField = new ComplexBean();
+        private final ComplexBean incorrectField = new ComplexBean();
+        private final ComplexBean uncheckedField = new ComplexBean();
     }
 
     private static class ComplexBean {
-        private final boolean booleanProperty = false;
-        private final int intProperty = 1;
-        private final Long longProperty = 2L;
-        private final String stringProperty = "3";
+        private final boolean booleanField = false;
+        private final int intField = 1;
+        private final Long longField = 2L;
+        private final String stringField = "3";
     }
 }

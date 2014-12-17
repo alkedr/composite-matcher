@@ -7,11 +7,9 @@ import java.util.Map;
 
 import static alkedr.matchers.reporting.checks.ExecutedCheckStatus.FAILED;
 
-public class PlainTextReporter implements Reporter {
-    public PlainTextReporter() {}
-
+public class PlainTextReporter<T> implements Reporter<T> {
     @Override
-    public String reportCheck(ExecutedCompositeCheck check) {
+    public String reportCheck(T currentActualValue, ExecutedCompositeCheck check) {
         return generatePlainTextReport(null, "", check);
     }
 
@@ -19,7 +17,7 @@ public class PlainTextReporter implements Reporter {
         if (check.getStatus() != FAILED) {
             return "";
         }
-        return indent + (name == null ? "" : name + ": ") + check.getActualValueAsString() + "\n"
+        return indent + (name == null ? "" : name + ": ") + (check.getInnerCompositeChecks().isEmpty() ? check.getActualValueAsString() : "") + "\n"
                 + generateSimpleChecksReport(indent + "  ", check)
                 + generateInnerCompositeChecksReport(indent + "  ", check);
     }

@@ -7,12 +7,11 @@ import java.util.Map;
 import java.util.Scanner;
 
 import static alkedr.matchers.reporting.checks.ExecutedCheckStatus.FAILED;
-import static java.lang.String.format;
-import static org.apache.commons.lang3.StringEscapeUtils.*;
+import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
 
-public class HtmlReporter implements Reporter {
+public class HtmlReporter<T> implements Reporter<T> {
     @Override
-    public String reportCheck(ExecutedCompositeCheck check) {
+    public String reportCheck(T currentActualValue, ExecutedCompositeCheck check) {
         return  "<!DOCTYPE html>" +
                 "<html>" +
                 "<head>" +
@@ -26,15 +25,22 @@ public class HtmlReporter implements Reporter {
 
     private static String generateExecutedCompositeCheckReport(String name, ExecutedCompositeCheck check) {
         return  "<div class='node " + check.getStatus() + "'>" +
-                    "<div class='name-value'>" +
-                        (name == null ? "" : "<span class='name'>" + name + "</span>") +
-                        "<span class='value'>" + escapeHtml4(check.getActualValueAsString()) + "</span>" +
-                    "</div>" +
+                "<div class='name-value'>" +
+                    generateNameValue(name, check) +
+                "</div>" +
                     "<div class='checks'>" +
                         generateMatchersTable(check) +
                         generateInnerNodesDiv(check) +
                     "</div>" +
                 "</div>";
+    }
+
+    private static String generateNameValue(String name, ExecutedCompositeCheck check) {
+        if (name == null) return "";
+        if (check.getInnerCompositeChecks().isEmpty()) {
+            return "<span class='name'>" + name + "</span><span class='value'>" + escapeHtml4(check.getActualValueAsString()) + "</span>";
+        }
+        return "<span class='name'>" + name + "</span>";
     }
 
     private static String generateMatchersTable(ExecutedCompositeCheck check) {
