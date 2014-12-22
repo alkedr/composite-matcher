@@ -5,15 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.alkedr.reporting-matchers</groupId>
-    <artifactId>reporting-matchers-parent</artifactId>
-    <version>0.1-SNAPSHOT</version>
-
-    <packaging>pom</packaging>
-
-    <modules>
-        <module>composite-matcher</module>
-        <module>reporter-html</module>
-    </modules>
+    <artifactId>reporting-matchers</artifactId>
+    <version>0.2-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -21,7 +14,7 @@
         <compiler.version>1.7</compiler.version>
     </properties>
 
-    <distributionManagement>
+    <!--<distributionManagement>
         <repository>
             <id>yandex_qa_releases</id>
             <name>Releases</name>
@@ -32,7 +25,7 @@
             <name>Snapshots</name>
             <url>${snapshots-repo}</url>
         </snapshotRepository>
-    </distributionManagement>
+    </distributionManagement>-->
 
     <dependencies>
         <dependency>
@@ -47,11 +40,30 @@
             <version>13.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.3.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.googlecode.lambdaj</groupId>
+            <artifactId>lambdaj</artifactId>
+            <version>2.3.3</version>
+        </dependency>
+
 
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.3</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
