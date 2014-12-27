@@ -17,6 +17,7 @@ import static java.util.Collections.unmodifiableMap;
  */
 public class ExecutedCompositeCheck implements ExecutedCheck {
     @Nullable private final Object actualValue;
+    @Nullable private ExecutedCheckStatus status = null;
     @NotNull private final List<ExecutedSimpleCheck> simpleChecks = new ArrayList<>();
     @NotNull private final Map<String, Map<Object, ExecutedCompositeCheck>> compositeChecks = new LinkedHashMap<>();
 
@@ -44,6 +45,7 @@ public class ExecutedCompositeCheck implements ExecutedCheck {
     @Override
     @NotNull
     public ExecutedCheckStatus getStatus() {
+        if (status != null) return status;
         boolean hasPassedChecks = false;
         for (ExecutedCompositeCheck check : Lambda.<ExecutedCompositeCheck>flatten(compositeChecks)) {
             if (!check.getStatus().isSuccessful()) return FAILED;
@@ -69,11 +71,30 @@ public class ExecutedCompositeCheck implements ExecutedCheck {
 
 
 
-    public void checkSilently(Matcher<?> matcher) {
+    public boolean checkSilently(Matcher<?> matcher) {
         ExecutedCompositeCheck check = executeCheck(actualValue, matcher);
         if (!check.getStatus().isSuccessful()) {
             addDataFrom(check);
+            return false;
         }
+        return true;
+    }
+
+    public <U> boolean checkAndReportIfMatches(Matcher<? super U> matcher) {
+        ExecutedCompositeCheck check = executeCheck(actualValue, matcher);
+        if (check.getStatus().isSuccessful()) {
+            addDataFrom(check);
+            return true;
+        }
+        return false;
+    }
+
+    public <U> boolean checkAndReportIfMatches(String name, U value, Matcher<? super U> matcher) {
+        return getOrAddValue(name, value).checkAndReportIfMatches(matcher);
+    }
+
+    public void reportMissingValue(String name) {
+        getOrAddValue(name, null).status = MISSING;
     }
 
     public <U> void checkThat(String name, Object value, Matcher<?> matcher) {
@@ -100,7 +121,9 @@ public class ExecutedCompositeCheck implements ExecutedCheck {
     }
 
     public void addDataFrom(ExecutedCompositeCheck check) {
-        assert Objects.equals(actualValue, check.actualValue);
+        if (!Objects.equals(actualValue, check.actualValue)) {
+            assert false;
+        }
         simpleChecks.addAll(check.simpleChecks);
         compositeChecks.putAll(check.compositeChecks);
     }

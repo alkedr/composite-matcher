@@ -14,10 +14,10 @@ public class PlainTextReporter<T> implements Reporter {
     }
 
     public static String generatePlainTextReport(String name, String indent, ExecutedCompositeCheck check) {
-        if (check.getStatus() != FAILED) {
+        if (check.getStatus().isSuccessful()) {
             return "";
         }
-        return indent + (name == null ? "" : name + ": ") + (check.getCompositeChecks().isEmpty() ? String.valueOf(check.getActualValue()) : "") + "\n"
+        return indent + check.getStatus() + " " + (name == null ? "" : name + ": ") + (check.getCompositeChecks().isEmpty() ? String.valueOf(check.getActualValue()) : "") + "\n"
                 + generateSimpleChecksReport(indent + "  ", check)
                 + generateInnerCompositeChecksReport(indent + "  ", check);
     }

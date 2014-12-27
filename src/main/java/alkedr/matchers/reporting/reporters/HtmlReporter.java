@@ -25,9 +25,7 @@ public class HtmlReporter implements Reporter {
 
     private static String generateExecutedCompositeCheckReport(String name, ExecutedCompositeCheck check) {
         return  "<div class='node " + check.getStatus() + "'>" +
-                "<div class='name-value'>" +
                     generateNameValue(name, check) +
-                "</div>" +
                     "<div class='checks'>" +
                         generateMatchersTable(check) +
                         generateInnerNodesDiv(check) +
@@ -36,11 +34,15 @@ public class HtmlReporter implements Reporter {
     }
 
     private static String generateNameValue(String name, ExecutedCompositeCheck check) {
-        if (name == null) return "";
-        if (check.getCompositeChecks().isEmpty()) {
-            return "<span class='name'>" + name + "</span><span class='value'>" + escapeHtml4(String.valueOf(check.getActualValue())) + "</span>";
+        StringBuilder stringBuilder = new StringBuilder("<div class='name-value'>");
+        if (name != null) {
+            stringBuilder.append("<span class='name'>").append(name).append("</span>");
+            if (check.getCompositeChecks().isEmpty()) {
+                stringBuilder.append("<span class='value'>").append(escapeHtml4(String.valueOf(check.getActualValue()))).append("</span>");
+            }
         }
-        return "<span class='name'>" + name + "</span>";
+        stringBuilder.append("</div>");
+        return stringBuilder.toString();
     }
 
     private static String generateMatchersTable(ExecutedCompositeCheck check) {

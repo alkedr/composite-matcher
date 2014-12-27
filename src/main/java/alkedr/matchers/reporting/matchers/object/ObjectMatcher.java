@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 import static ch.lambdaj.Lambda.argument;
-import static ch.lambdaj.Lambda.sum;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.*;
 
@@ -76,13 +75,26 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T> {
             this.extractor = extractor;
         }
 
+        public ObjectMatcher<T> isUnchecked() {
+            addPlannedCheck(extractor, new ArrayList<Matcher<? super U>>());
+            return ObjectMatcher.this;
+        }
+
         public ObjectMatcher<T> isEqualTo(U expectedValue) {
             return is(equalTo(expectedValue));
+        }
+
+        public ObjectMatcher<T> isEqualToIfNotNull(U expectedValue) {
+            return expectedValue == null ? isUnchecked() : isEqualTo(expectedValue);
         }
 
         public ObjectMatcher<T> is(Matcher<? super U> matcher) {
             addPlannedCheck(extractor, asList(matcher));
             return ObjectMatcher.this;
+        }
+
+        public ObjectMatcher<T> isIf(boolean condition, Matcher<? super U> matcher) {
+            return condition ? is(matcher) : isUnchecked();
         }
     }
 
