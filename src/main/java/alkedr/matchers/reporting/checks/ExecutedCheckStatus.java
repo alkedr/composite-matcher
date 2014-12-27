@@ -1,11 +1,11 @@
 package alkedr.matchers.reporting.checks;
 
 public enum ExecutedCheckStatus {
-    SKIPPED(true),  // TODO: extracted but not checked (MapMatcher.hasKey(keyMatcher))
-    PASSED(true),
-    FAILED(false),
-    MISSING(false),
-    UNEXPECTED(false),
+    SKIPPED(true),  // нет проверок
+    PASSED(true),   // все проверки успешны
+    FAILED(false),  // хотя бы одна проверка неуспешна
+    MISSING(false), // не нашлось значение (например в мапе нет нужного ключа)
+    UNEXPECTED(false),  // лишнее значение
     ;
 
     private final boolean isSuccessful;
