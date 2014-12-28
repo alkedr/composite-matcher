@@ -1,72 +1,45 @@
 package alkedr.matchers.reporting.checks;
 
-import ch.lambdaj.Lambda;
 import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 
-import static alkedr.matchers.reporting.checks.ExecutedCheckStatus.*;
-import static java.util.Collections.unmodifiableList;
-import static java.util.Collections.unmodifiableMap;
+import static alkedr.matchers.reporting.checks.ExecutedCheckStatus.MISSING;
 
-/**
- * Хранит информацию о запуске {@link alkedr.matchers.reporting.ReportingMatcher}'а
- */
-public class ExecutedCompositeCheck implements ExecutedCheck {
-    @Nullable private final Object actualValue;
-    @Nullable private ExecutedCheckStatus status = null;
-    @NotNull private final List<ExecutedSimpleCheck> simpleChecks = new ArrayList<>();
-    @NotNull private final Map<String, Map<Object, ExecutedCompositeCheck>> compositeChecks = new LinkedHashMap<>();
+public class CheckExecutionUtils {
+
+    public static void beginMatcherExecution() {
+        INNER_CHECK_RESULT.remove();
+    }
+
+    public static void endMatcherExecution(ExecutedCompositeCheck check) {
+        INNER_CHECK_RESULT.set(check);
+    }
 
 
-    public ExecutedCompositeCheck(@Nullable Object actualValue,
-                                  @NotNull Iterable<? extends Map.Entry<String, Map<Object, ExecutedCompositeCheck>>> compositeChecks,
-                                  @NotNull Collection<ExecutedSimpleCheck> simpleChecks) {
-        this.actualValue = actualValue;
-        for (Map.Entry<String, Map<Object, ExecutedCompositeCheck>> entry : compositeChecks) {
-            this.compositeChecks.put(entry.getKey(), entry.getValue());
+    /**
+     * @param value значение, которое нужно проверить
+     * @param matcher матчер, которым нужно проверять value
+     * @return ExecutedCompositeCheck, в котором будет заполнено либо simpleChecks, либо compositeChecks
+     */
+    public static ExecutedCompositeCheck executeCheck(@Nullable Object value, @NotNull Matcher<?> matcher) {
+        INNER_CHECK_RESULT.remove();
+        boolean matcherResult = matcher.matches(value);
+        if (INNER_CHECK_RESULT.get() == null) {
+            ExecutedCompositeCheck result = new ExecutedCompositeCheck(value);
+            result.simpleChecks.add(new ExecutedSimpleCheck(StringDescription.toString(matcher),
+                    matcherResult ? null : getMismatchDescription(matcher, value)));
+            return result;
+        } else {
+            return INNER_CHECK_RESULT.get();
         }
-        this.simpleChecks.addAll(simpleChecks);
     }
 
-    public ExecutedCompositeCheck(@Nullable Object actualValue) {
-        this(actualValue, new ArrayList<Map.Entry<String, Map<Object, ExecutedCompositeCheck>>>(), new ArrayList<ExecutedSimpleCheck>());
-    }
-
-
-    @Nullable
-    public Object getActualValue() {
-        return actualValue;
-    }
-
-    @Override
-    @NotNull
-    public ExecutedCheckStatus getStatus() {
-        if (status != null) return status;
-        boolean hasPassedChecks = false;
-        for (ExecutedCompositeCheck check : Lambda.<ExecutedCompositeCheck>flatten(compositeChecks)) {
-            if (!check.getStatus().isSuccessful()) return FAILED;
-            if (check.getStatus() == PASSED) hasPassedChecks = true;
-        }
-        for (ExecutedCheck check : simpleChecks) {
-            if (!check.getStatus().isSuccessful()) return FAILED;
-            if (check.getStatus() == PASSED) hasPassedChecks = true;
-        }
-        return hasPassedChecks ? PASSED : SKIPPED;
-    }
-
-    @NotNull
-    public Map<String, Map<Object, ExecutedCompositeCheck>> getCompositeChecks() {
-        return unmodifiableMap(compositeChecks);
-    }
-
-    @NotNull
-    public List<ExecutedSimpleCheck> getSimpleChecks() {
-        return unmodifiableList(simpleChecks);
-    }
 
 
 
@@ -129,18 +102,6 @@ public class ExecutedCompositeCheck implements ExecutedCheck {
     }
 
 
-    private static <U> ExecutedCompositeCheck executeCheck(@Nullable Object value, @NotNull Matcher<?> matcher) {
-        INNER_CHECK_RESULT.remove();
-        boolean matcherResult = matcher.matches(value);
-        if (INNER_CHECK_RESULT.get() == null) {
-            ExecutedCompositeCheck result = new ExecutedCompositeCheck(value);
-            result.simpleChecks.add(new ExecutedSimpleCheck(StringDescription.toString(matcher),
-                    matcherResult ? null : getMismatchDescription(matcher, value)));
-            return result;
-        } else {
-            return INNER_CHECK_RESULT.get();
-        }
-    }
 
     private static String getMismatchDescription(Matcher<?> matcher, Object actualValue) {
         StringDescription stringMismatchDescription = new StringDescription();
@@ -156,6 +117,7 @@ public class ExecutedCompositeCheck implements ExecutedCheck {
      * нельзя просто попытаться покастить matcher к CompositeMatcher'у, т. к. бывают обёртки для матчеров (напр. describedAs())
      *
      * TODO: проверять, что хранящаяся здесь проверка выполнена на том значении, на котором надо
+     * TODO: INNER_CHECK_RESULT - List<ExecutedCompositeCheck>
      *  (нужно для случаев типа  assertAndReportThat(actual, contains(reportingMatcher()))
      */
     public static final ThreadLocal<ExecutedCompositeCheck> INNER_CHECK_RESULT = new ThreadLocal<>();

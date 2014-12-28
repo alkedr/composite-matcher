@@ -1,5 +1,7 @@
 package alkedr.matchers.reporting.checks;
 
+import alkedr.matchers.reporting.checks.ExecutedCheck;
+import alkedr.matchers.reporting.checks.ExecutedCheckStatus;
 import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +29,8 @@ public class ExecutedSimpleCheck implements ExecutedCheck {
 
 
     @Override
-    @NotNull
-    public ExecutedCheckStatus getStatus() {
-        return mismatchDescription == null ? PASSED : FAILED;
+    public boolean isSuccessful() {
+        return mismatchDescription == null;
     }
 
     @Nullable
