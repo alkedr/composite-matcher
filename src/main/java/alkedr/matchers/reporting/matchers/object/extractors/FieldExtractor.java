@@ -1,12 +1,14 @@
 package alkedr.matchers.reporting.matchers.object.extractors;
 
+import alkedr.matchers.reporting.checks.ExtractedValue;
 import alkedr.matchers.reporting.matchers.ValuesExtractor;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
-public class FieldExtractor<T, U> implements ValuesExtractor<T, U> {
+import static java.util.Arrays.asList;
+
+public class FieldExtractor<T, U> implements ValuesExtractor<T> {
     private final String nameForReport;
     private final String nameForValueExtraction;
 
@@ -16,16 +18,13 @@ public class FieldExtractor<T, U> implements ValuesExtractor<T, U> {
     }
 
     @Override
-    public Map<String, U> extractValues(T item) {
-        Map<String, U> result = new HashMap<>();
+    public List<ExtractedValue> extractValues(T item) {
         try {
             Field field = item.getClass().getDeclaredField(nameForValueExtraction);  // TODO: проверить находятся ли поля родителей
             field.setAccessible(true);
-            result.put(nameForReport, (U)field.get(item));  // TODO: safe cast
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            // FIXME: В отчёте должно отобразиться, что поле не найдено
-            throw new RuntimeException(e);
+            return asList(new ExtractedValue(nameForReport, field.get(item)));
+        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+            return asList(new ExtractedValue(nameForReport, null, ExtractedValue.Status.MISSING));
         }
-        return result;
     }
 }

@@ -3,10 +3,8 @@ package alkedr.matchers.reporting.reporters;
 import alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
 import alkedr.matchers.reporting.checks.ExecutedSimpleCheck;
 
-import java.util.Map;
 import java.util.Scanner;
 
-import static alkedr.matchers.reporting.checks.ExecutedCheckStatus.FAILED;
 import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
 
 public class HtmlReporter implements Reporter {
@@ -19,13 +17,13 @@ public class HtmlReporter implements Reporter {
                     "<style type='text/css'>" + resourceAsString("/report.css") + "</style>" +
                     "<script>" + resourceAsString("/report.js") + "</script>" +
                 "</head>" +
-                "<body>" + generateExecutedCompositeCheckReport(null, check) + "</body>" +
+                "<body>" + generateExecutedCompositeCheckReport(check) + "</body>" +
                 "</html>";
     }
 
-    private static String generateExecutedCompositeCheckReport(String name, ExecutedCompositeCheck check) {
-        return  "<div class='node " + check.getStatus() + "'>" +
-                    generateNameValue(name, check) +
+    private static String generateExecutedCompositeCheckReport(ExecutedCompositeCheck check) {
+        return  "<div class='node " + check.getExtractedValue().getStatus().toString().toLowerCase() + " " + (check.isSuccessful() ? "passed" : "failed") + "'>" +
+                    generateNameValue(check) +
                     "<div class='checks'>" +
                         generateMatchersTable(check) +
                         generateInnerNodesDiv(check) +
@@ -33,13 +31,11 @@ public class HtmlReporter implements Reporter {
                 "</div>";
     }
 
-    private static String generateNameValue(String name, ExecutedCompositeCheck check) {
+    private static String generateNameValue(ExecutedCompositeCheck check) {
         StringBuilder stringBuilder = new StringBuilder("<div class='name-value'>");
-        if (name != null) {
-            stringBuilder.append("<span class='name'>").append(name).append("</span>");
-            if (check.getCompositeChecks().isEmpty()) {
-                stringBuilder.append("<span class='value'>").append(escapeHtml4(String.valueOf(check.getActualValue()))).append("</span>");
-            }
+        stringBuilder.append("<span class='name'>").append(check.getExtractedValue().getName()).append("</span>");
+        if (check.getCompositeChecks().isEmpty()) {
+            stringBuilder.append("<span class='value'>").append(escapeHtml4(String.valueOf(check.getExtractedValue().getValue()))).append("</span>");
         }
         stringBuilder.append("</div>");
         return stringBuilder.toString();
@@ -48,18 +44,18 @@ public class HtmlReporter implements Reporter {
     private static String generateMatchersTable(ExecutedCompositeCheck check) {
         StringBuilder stringBuilder = new StringBuilder("<table class='matchers' style='border-spacing: 0px;'>");
         for (ExecutedSimpleCheck simpleCheck : check.getSimpleChecks()) {
-            if (simpleCheck.getStatus() == FAILED) {
+            if (simpleCheck.isSuccessful()) {
+                stringBuilder
+                        .append("<tr class='matcher passed'><td class='image'>✔</td><td class='description'>")
+                        .append(escapeHtml4(simpleCheck.getMatcherDescription()))
+                        .append("</td></tr>");
+            } else {
                 stringBuilder
                         .append("<tr class='matcher failed'><td class='image'>×</td><td class='description'>")
                         .append(escapeHtml4(simpleCheck.getMatcherDescription()))
                         .append("</td></tr>")
                         .append("<tr class='matcher failed'><td></td><td class='mismatch-description'>")
                         .append(escapeHtml4(simpleCheck.getMismatchDescription()))
-                        .append("</td></tr>");
-            } else {
-                stringBuilder
-                        .append("<tr class='matcher passed'><td class='image'>✔</td><td class='description'>")
-                        .append(escapeHtml4(simpleCheck.getMatcherDescription()))
                         .append("</td></tr>");
             }
         }
@@ -69,10 +65,8 @@ public class HtmlReporter implements Reporter {
 
     private static String generateInnerNodesDiv(ExecutedCompositeCheck check) {
         StringBuilder stringBuilder = new StringBuilder("<div class='inner-nodes'>");
-        for (Map.Entry<String, Map<Object, ExecutedCompositeCheck>> nameToValuesChecks : check.getCompositeChecks().entrySet()) {
-            for (Map.Entry<Object, ExecutedCompositeCheck> valueToCheck : nameToValuesChecks.getValue().entrySet()) {
-                stringBuilder.append(generateExecutedCompositeCheckReport(nameToValuesChecks.getKey(), valueToCheck.getValue()));
-            }
+        for (ExecutedCompositeCheck innerCheck : check.getCompositeChecks()) {
+            stringBuilder.append(generateExecutedCompositeCheckReport(innerCheck));
         }
         stringBuilder.append("</div>");
         return stringBuilder.toString();

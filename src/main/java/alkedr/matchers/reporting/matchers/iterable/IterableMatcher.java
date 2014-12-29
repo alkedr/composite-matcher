@@ -1,15 +1,17 @@
 package alkedr.matchers.reporting.matchers.iterable;
 
 import alkedr.matchers.reporting.TypeSafeReportingMatcher;
+import alkedr.matchers.reporting.checks.CheckExecutor;
 import alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
+import alkedr.matchers.reporting.checks.ExtractedValue;
 import org.hamcrest.Matcher;
-import org.hamcrest.StringDescription;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 import static ch.lambdaj.Lambda.filter;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.StringDescription.asString;
 
 /**
  * User: alkedr
@@ -18,7 +20,7 @@ import static org.hamcrest.Matchers.equalTo;
 public class IterableMatcher<T> extends TypeSafeReportingMatcher<Iterable<T>> {
     private final List<Matcher<? super T>> elementMatchers = new ArrayList<>();
     private final List<Matcher<? super T>> matchersForEveryElement = new ArrayList<>();
-    private final Map<Matcher<? super T>, List<Matcher<? super List<T>>>> sublistSelectorToMatcher = new LinkedHashMap<>();
+    private final Map<Matcher<? super T>, List<Matcher<? super Iterable<T>>>> sublistSelectorToMatcher = new LinkedHashMap<>();
 
 
     public IterableMatcher<T> hasItem(T value) {
@@ -40,8 +42,8 @@ public class IterableMatcher<T> extends TypeSafeReportingMatcher<Iterable<T>> {
     }
 
 
-    public IterableMatcher<T> select(Matcher<? super T> selector, Matcher<? super List<T>> matcher) {
-        List<Matcher<? super List<T>>> list = sublistSelectorToMatcher.get(selector);
+    public IterableMatcher<T> select(Matcher<? super T> selector, Matcher<? super Iterable<T>> matcher) {
+        List<Matcher<? super Iterable<T>>> list = sublistSelectorToMatcher.get(selector);
         if (list == null) {
             list = new ArrayList<>();
             sublistSelectorToMatcher.put(selector, list);
@@ -70,36 +72,40 @@ public class IterableMatcher<T> extends TypeSafeReportingMatcher<Iterable<T>> {
 
     @Override
     public ExecutedCompositeCheck getReportSafely(@Nullable Iterable<T> item) {
+        CheckExecutor<T> executor = new CheckExecutor<>(new ExtractedValue("", item));
+
         List<Matcher<? super T>> remainingMatchers = new LinkedList<>(elementMatchers);
-        ExecutedCompositeCheck result = new ExecutedCompositeCheck(item);
         if (item != null) {
-            for (Map.Entry<Matcher<? super T>, List<Matcher<? super List<T>>>> entry : sublistSelectorToMatcher.entrySet()) {
-                Iterable<T> filtered = filter(entry.getKey(), item);
-                for (Matcher<? super List<T>> matcher : entry.getValue()) {
-                    result.checkThat(StringDescription.toString(entry.getKey()), filtered, matcher);
+            for (Map.Entry<Matcher<? super T>, List<Matcher<? super Iterable<T>>>> entry : sublistSelectorToMatcher.entrySet()) {
+                CheckExecutor<Iterable<T>> checkExecutorForFiltered = new CheckExecutor<>(new ExtractedValue(asString(entry.getKey()), filter(entry.getKey(), item)));
+                for (Matcher<? super Iterable<T>> matcher : entry.getValue()) {
+                    checkExecutorForFiltered.checkThat(matcher);
                 }
+                executor.addCompositeCheck(checkExecutorForFiltered.buildCompositeCheck());
             }
 
             int i = 0;
             for (T element : item) {
+                CheckExecutor<T> checkExecutorForElement = new CheckExecutor<>(new ExtractedValue(String.valueOf(i), element));
                 for (Matcher<? super T> matcher : matchersForEveryElement) {
-                    result.checkThat(String.valueOf(i), element, matcher);
+                    checkExecutorForElement.checkThat(matcher);
                 }
                 Iterator<Matcher<? super T>> remainingMatchersIterator = remainingMatchers.iterator();
                 while (remainingMatchersIterator.hasNext()) {
                     Matcher<? super T> elementMatcher = remainingMatchersIterator.next();
-                    if (result.checkAndReportIfMatches(String.valueOf(i), element, elementMatcher)) {
+                    if (checkExecutorForElement.checkAndReportIfMatches(elementMatcher)) {
                         remainingMatchersIterator.remove();
                     }
                 }
                 i++;
+                executor.addCompositeCheck(checkExecutorForElement.buildCompositeCheck());
             }
         }
         for (Matcher<? super T> remainingMatcher : remainingMatchers) {
-            result.reportMissingValue(StringDescription.asString(remainingMatcher));
+            executor.addCompositeCheck(new CheckExecutor<>(new ExtractedValue(asString(remainingMatcher), null, ExtractedValue.Status.MISSING)).buildCompositeCheck());
         }
-        ExecutedCompositeCheck.INNER_CHECK_RESULT.set(result);  //FIXME
-        return result;
+
+        return executor.buildCompositeCheck();
     }
 
 

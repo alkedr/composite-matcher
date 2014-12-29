@@ -1,6 +1,8 @@
 package alkedr.matchers.reporting.matchers.object;
 
+import alkedr.matchers.reporting.checks.CheckExecutor;
 import alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
+import alkedr.matchers.reporting.checks.ExtractedValue;
 import alkedr.matchers.reporting.matchers.ValueExtractingMatcher;
 import alkedr.matchers.reporting.matchers.ValuesExtractor;
 import alkedr.matchers.reporting.matchers.object.extractors.*;
@@ -69,9 +71,9 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T> {
 
 
     public class PlannedCheckAdder<U> {
-        private final ValuesExtractor<T, U> extractor;
+        private final ValuesExtractor<T> extractor;
 
-        private PlannedCheckAdder(ValuesExtractor<T, U> extractor) {
+        private PlannedCheckAdder(ValuesExtractor<T> extractor) {
             this.extractor = extractor;
         }
 
@@ -99,9 +101,9 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T> {
     }
 
     public class PlannedChecksAdder {
-        private final ValuesExtractor<T, Object> extractor;
+        private final ValuesExtractor<T> extractor;
 
-        private PlannedChecksAdder(ValuesExtractor<T, Object> extractor) {
+        private PlannedChecksAdder(ValuesExtractor<T> extractor) {
             this.extractor = extractor;
         }
 
@@ -114,10 +116,10 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T> {
 
     @Override
     public ExecutedCompositeCheck getReportSafely(@Nullable T item) {
-        ExecutedCompositeCheck report = new ExecutedCompositeCheck(item);
-        report.checkSilently(isA(tClass));
-        report.addDataFrom(super.getReportSafely(item));
-        return report;
+        CheckExecutor<T> executor = new CheckExecutor<>(new ExtractedValue("", item));
+        executor.checkAndReportIfDoesntMatch(isA(tClass));
+        executor.addDataFrom(super.getReportSafely(item));
+        return executor.buildCompositeCheck();
     }
 
 

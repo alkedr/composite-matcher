@@ -1,11 +1,14 @@
 package alkedr.matchers.reporting.matchers.map.extractors;
 
+import alkedr.matchers.reporting.checks.ExtractedValue;
 import alkedr.matchers.reporting.matchers.ValuesExtractor;
 
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
-public class MapValueExtractor<T, U> implements ValuesExtractor<Map<T, U>, U> {
+import static java.util.Arrays.asList;
+
+public class MapValueExtractor<T, U> implements ValuesExtractor<Map<T, U>> {
     private final T key;
 
     public MapValueExtractor(T key) {
@@ -13,12 +16,7 @@ public class MapValueExtractor<T, U> implements ValuesExtractor<Map<T, U>, U> {
     }
 
     @Override
-    public Map<String, U> extractValues(Map<T, U> item) {
-        if (!item.containsKey(key)) {
-            // TODO
-        }
-        Map<String, U> result = new LinkedHashMap<>();
-        result.put(String.valueOf(key), item.get(key));
-        return result;
+    public List<ExtractedValue> extractValues(Map<T, U> item) {
+        return item.containsKey(key) ? asList(new ExtractedValue(String.valueOf(key), item.get(key))) : asList(new ExtractedValue(String.valueOf(key), null, ExtractedValue.Status.MISSING));
     }
 }

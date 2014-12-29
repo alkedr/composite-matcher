@@ -1,7 +1,16 @@
 package alkedr.matchers.reporting.matchers;
 
-import java.util.Map;
+import alkedr.matchers.reporting.checks.ExtractedValue;
 
-public interface ValuesExtractor<T, U> {
-    Map<String, U> extractValues(T item);
+import java.util.List;
+
+public interface ValuesExtractor<T> {
+    List<ExtractedValue> extractValues(T item);
+
+    // Эти штуки нужны для того, чтобы одинаковые ValuesExtractor'ы объединялись и запускались только один раз
+    boolean equals(Object obj);
+    int hashCode();
+
+    // эта штука нужна для случаев, когда экстрактор вернул null или бросил исключение
+    String toString();
 }

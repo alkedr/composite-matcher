@@ -1,15 +1,16 @@
 package alkedr.matchers.reporting.matchers.object.extractors;
 
+import alkedr.matchers.reporting.checks.ExtractedValue;
 import alkedr.matchers.reporting.matchers.ValuesExtractor;
 import org.hamcrest.Matcher;
 
 import java.lang.reflect.Field;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import static java.lang.reflect.Modifier.isStatic;
 
-public class FieldsExtractor<T> implements ValuesExtractor<T, Object> {
+public class FieldsExtractor<T> implements ValuesExtractor<T> {
     private final Matcher<String> fieldNameMatcher;
 
     public FieldsExtractor(Matcher<String> fieldNameMatcher) {
@@ -17,14 +18,15 @@ public class FieldsExtractor<T> implements ValuesExtractor<T, Object> {
     }
 
     @Override
-    public Map<String, Object> extractValues(T item) {
-        Map<String, Object> result = new LinkedHashMap<>();
+    public List<ExtractedValue> extractValues(T item) {
+        List<ExtractedValue> result = new ArrayList<>();
         for (Field field : item.getClass().getFields()) {
             field.setAccessible(true);
             if (!isStatic(field.getModifiers()) && fieldNameMatcher.matches(field.getName())) {
                 try {
-                    result.put(field.getName(), field.get(item));
+                    result.add(new ExtractedValue(field.getName(), field.get(item)));
                 } catch (IllegalAccessException ignored) {
+                    result.add(new ExtractedValue(field.getName(), null, ExtractedValue.Status.MISSING));
                 }
             }
         }

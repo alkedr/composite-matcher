@@ -1,5 +1,6 @@
 package alkedr.matchers.reporting;
 
+import alkedr.matchers.reporting.checks.CheckExecutor;
 import alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
 import alkedr.matchers.reporting.reporters.PlainTextReporter;
 import org.hamcrest.BaseMatcher;
@@ -15,7 +16,8 @@ public abstract class BaseReportingMatcher<T> extends BaseMatcher<T> implements 
     public boolean matches(Object item) {
         lastItem = item;
         lastReport = getReport(item);
-        return lastReport.getStatus().isSuccessful();
+        CheckExecutor.INNER_CHECK_RESULT.set(lastReport);
+        return lastReport.isSuccessful();
     }
 
     @Override

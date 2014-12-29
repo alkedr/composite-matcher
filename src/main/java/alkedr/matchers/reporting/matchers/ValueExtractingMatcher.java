@@ -1,7 +1,9 @@
 package alkedr.matchers.reporting.matchers;
 
 import alkedr.matchers.reporting.TypeSafeReportingMatcher;
+import alkedr.matchers.reporting.checks.CheckExecutor;
 import alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
+import alkedr.matchers.reporting.checks.ExtractedValue;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,30 +13,31 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ValueExtractingMatcher<T> extends TypeSafeReportingMatcher<T> {
-    private final Map<ValuesExtractor<T, ?>, Collection<Matcher<?>>> valueExtractorToMatchersMap = new LinkedHashMap<>();
+    private final Map<ValuesExtractor<T>, Collection<Matcher<Object>>> extractorToMatchersMap = new LinkedHashMap<>();
 
-    protected <U> void addPlannedCheck(ValuesExtractor<T, U> extractor, Collection<? extends Matcher<? super U>> newMatchers) {
-        Collection<Matcher<?>> matchers = valueExtractorToMatchersMap.get(extractor);
+    protected void addPlannedCheck(ValuesExtractor<T> extractor, Collection<? extends Matcher<?>> newMatchers) {
+        Collection<Matcher<Object>> matchers = extractorToMatchersMap.get(extractor);
         if (matchers == null) {
             matchers = new ArrayList<>();
-            valueExtractorToMatchersMap.put(extractor, matchers);
+            extractorToMatchersMap.put(extractor, matchers);
         }
-        matchers.addAll(newMatchers);
+        matchers.addAll((Collection<? extends Matcher<Object>>) newMatchers);
     }
 
 
     @Override
     public ExecutedCompositeCheck getReportSafely(@Nullable T item) {
-        ExecutedCompositeCheck report = new ExecutedCompositeCheck(item);
-        for (Map.Entry<ValuesExtractor<T, ?>, Collection<Matcher<?>>> valueExtractorToMatchers : valueExtractorToMatchersMap.entrySet()) {
-            for (Map.Entry<String, ?> valueNameToValue : valueExtractorToMatchers.getKey().extractValues(item).entrySet()) {
-                report.reportValue(valueNameToValue.getKey(), valueNameToValue.getValue());
-                for (Matcher<?> matcher : valueExtractorToMatchers.getValue()) {
-                    report.checkThat(valueNameToValue.getKey(), valueNameToValue.getValue(), matcher);
+        CheckExecutor<T> executor = new CheckExecutor<>(new ExtractedValue("", item));
+        for (Map.Entry<ValuesExtractor<T>, Collection<Matcher<Object>>> extractorToMatchers : extractorToMatchersMap.entrySet()) {
+            for (ExtractedValue extractedValue : extractorToMatchers.getKey().extractValues(item)) {
+                CheckExecutor<?> executorForExtractedValue = new CheckExecutor<>(extractedValue);
+                for (Matcher<Object> matcher : extractorToMatchers.getValue()) {
+                    executorForExtractedValue.checkThat(matcher);
                 }
+                // TODO: run unchecked values extraction recursively here, add results to executorForExtractedValue
+                executor.addCompositeCheck(executorForExtractedValue.buildCompositeCheck());
             }
         }
-        ExecutedCompositeCheck.INNER_CHECK_RESULT.set(report);  //FIXME
-        return report;
+        return executor.buildCompositeCheck();
     }
 }

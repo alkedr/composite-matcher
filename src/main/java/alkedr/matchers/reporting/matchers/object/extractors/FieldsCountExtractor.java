@@ -1,14 +1,15 @@
 package alkedr.matchers.reporting.matchers.object.extractors;
 
+import alkedr.matchers.reporting.checks.ExtractedValue;
 import alkedr.matchers.reporting.matchers.ValuesExtractor;
 
 import java.lang.reflect.Field;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 
 import static java.lang.reflect.Modifier.isStatic;
+import static java.util.Arrays.asList;
 
-public class FieldsCountExtractor<T> implements ValuesExtractor<T, Integer> {
+public class FieldsCountExtractor<T> implements ValuesExtractor<T> {
     private final Class<T> tClass;
     private final String valueName;
 
@@ -18,15 +19,13 @@ public class FieldsCountExtractor<T> implements ValuesExtractor<T, Integer> {
     }
 
     @Override
-    public Map<String, Integer> extractValues(Object item) {
+    public List<ExtractedValue> extractValues(Object item) {
         int actualFieldsCount = 0;
         for (Field field : tClass.getFields()) {
             if (!isStatic(field.getModifiers())) {
                 actualFieldsCount++;
             }
         }
-        Map<String, Integer> result = new LinkedHashMap<>();
-        result.put(valueName, actualFieldsCount);
-        return result;
+        return asList(new ExtractedValue(valueName, actualFieldsCount));
     }
 }

@@ -1,12 +1,14 @@
 package alkedr.matchers.reporting.matchers.object.extractors;
 
+import alkedr.matchers.reporting.checks.ExtractedValue;
 import alkedr.matchers.reporting.matchers.ValuesExtractor;
 import ch.lambdaj.function.argument.Argument;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 
-public class LambdajPropertyExtractor<T, U> implements ValuesExtractor<T, U> {
+import static java.util.Arrays.asList;
+
+public class LambdajPropertyExtractor<T, U> implements ValuesExtractor<T> {
     private final String nameForReport;
     private final Argument<U> argument;
 
@@ -16,9 +18,7 @@ public class LambdajPropertyExtractor<T, U> implements ValuesExtractor<T, U> {
     }
 
     @Override
-    public Map<String, U> extractValues(T item) {
-        Map<String, U> result = new LinkedHashMap<>();
-        result.put(nameForReport, argument.evaluate(item));
-        return result;
+    public List<ExtractedValue> extractValues(T item) {
+        return asList(new ExtractedValue(nameForReport, argument.evaluate(item)));
     }
 }

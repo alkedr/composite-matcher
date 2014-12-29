@@ -36,9 +36,9 @@ public class MapMatcher<T, U> extends ValueExtractingMatcher<Map<T, U>> {
 
 
     public class EntryCheckAdder {
-        private final ValuesExtractor<Map<T, U>, U> extractor;
+        private final ValuesExtractor<Map<T, U>> extractor;
 
-        private EntryCheckAdder(ValuesExtractor<Map<T, U>, U> extractor) {
+        private EntryCheckAdder(ValuesExtractor<Map<T, U>> extractor) {
             this.extractor = extractor;
         }
 

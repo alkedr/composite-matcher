@@ -1,13 +1,14 @@
 package alkedr.matchers.reporting.matchers.object.extractors;
 
+import alkedr.matchers.reporting.checks.ExtractedValue;
 import alkedr.matchers.reporting.matchers.ValuesExtractor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
-public class AllMethodsThatReturnNonVoidExtractor<T> implements ValuesExtractor<T, Object> {
+public class AllMethodsThatReturnNonVoidExtractor<T> implements ValuesExtractor<T> {
     private final Class<T> tClass;
 
     public AllMethodsThatReturnNonVoidExtractor(Class<T> tClass) {
@@ -15,15 +16,15 @@ public class AllMethodsThatReturnNonVoidExtractor<T> implements ValuesExtractor<
     }
 
     @Override
-    public Map<String, Object> extractValues(Object item) {   // FIXME: what if getter throws?
-        Map<String, Object> result = new LinkedHashMap<>();
+    public List<ExtractedValue> extractValues(Object item) {   // FIXME: what if getter throws?
+        List<ExtractedValue> result = new ArrayList<>();
         for (Method method : item == null ? tClass.getMethods() : item.getClass().getMethods()) {
             if (isGoodGetter(method)) {
                 try {
                     method.setAccessible(true);
-                    result.put(getterNameToPropertyName(method.getName()), item == null ? null : method.invoke(item));
+                    result.add(new ExtractedValue(getterNameToPropertyName(method.getName()), item == null ? null : method.invoke(item)));
                 } catch (IllegalAccessException | InvocationTargetException ignored) {
-                    result.put(getterNameToPropertyName(method.getName()), null);
+                    result.add(new ExtractedValue(getterNameToPropertyName(method.getName()), null, ExtractedValue.Status.MISSING));
                 }
             }
         }
