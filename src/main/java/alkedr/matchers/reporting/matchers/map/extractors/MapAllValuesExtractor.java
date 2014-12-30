@@ -1,18 +1,18 @@
 package alkedr.matchers.reporting.matchers.map.extractors;
 
-import alkedr.matchers.reporting.checks.ExtractedValue;
-import alkedr.matchers.reporting.matchers.ValuesExtractor;
+import alkedr.matchers.reporting.matchers.ValueExtractor;
+import alkedr.matchers.reporting.matchers.ValueExtractorsExtractor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class MapAllValuesExtractor<T, U> implements ValuesExtractor<Map<T, U>> {
+public class MapAllValuesExtractor<T, U> implements ValueExtractorsExtractor<Map<T, U>> {
     @Override
-    public List<ExtractedValue> extractValues(Map<T, U> item) {
-        List<ExtractedValue> result = new ArrayList<>();
+    public List<ValueExtractor<Map<T, U>>> extractValueExtractors(Map<T, U> item) {
+        List<ValueExtractor<Map<T, U>>> result = new ArrayList<>();
         for (Map.Entry<T, U> entry : item.entrySet()) {
-            result.add(new ExtractedValue(String.valueOf(entry.getKey()), entry.getValue()));
+            result.add(new MapValueExtractor<T, U>(entry.getKey()));
         }
         return result;
     }

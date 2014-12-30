@@ -4,7 +4,8 @@ import alkedr.matchers.reporting.checks.CheckExecutor;
 import alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
 import alkedr.matchers.reporting.checks.ExtractedValue;
 import alkedr.matchers.reporting.matchers.ValueExtractingMatcher;
-import alkedr.matchers.reporting.matchers.ValuesExtractor;
+import alkedr.matchers.reporting.matchers.ValueExtractor;
+import alkedr.matchers.reporting.matchers.ValueExtractorsExtractor;
 import alkedr.matchers.reporting.matchers.object.extractors.*;
 import ch.lambdaj.function.argument.Argument;
 import org.hamcrest.Matcher;
@@ -53,7 +54,7 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T> {
         return fields(any(String.class)).are(valueMatcher);
     }
 
-    private ObjectMatcher<T> allMethodsThatReturnNonVoidReturn(Matcher<? super Object> matcher) {
+    public ObjectMatcher<T> allMethodsThatReturnNonVoidReturn(Matcher<? super Object> matcher) {
         addPlannedCheck(new AllMethodsThatReturnNonVoidExtractor<>(tClass), asList(matcher));
         return this;
     }
@@ -71,9 +72,9 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T> {
 
 
     public class PlannedCheckAdder<U> {
-        private final ValuesExtractor<T> extractor;
+        private final ValueExtractor<T> extractor;
 
-        private PlannedCheckAdder(ValuesExtractor<T> extractor) {
+        private PlannedCheckAdder(ValueExtractor<T> extractor) {
             this.extractor = extractor;
         }
 
@@ -101,9 +102,9 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T> {
     }
 
     public class PlannedChecksAdder {
-        private final ValuesExtractor<T> extractor;
+        private final ValueExtractorsExtractor<T> extractor;
 
-        private PlannedChecksAdder(ValuesExtractor<T> extractor) {
+        private PlannedChecksAdder(ValueExtractorsExtractor<T> extractor) {
             this.extractor = extractor;
         }
 
@@ -121,27 +122,4 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T> {
         executor.addDataFrom(super.getReportSafely(item));
         return executor.buildCompositeCheck();
     }
-
-
-    public static <T> ObjectMatcher<T> object(Class<T> tClass) {
-        return new ObjectMatcher<>(tClass);
-    }
-
-    public static <T> ObjectMatcher<T> beanWithFields(Class<T> tClass) {
-        // TODO: универсальный матчер для непроверенных полей, который знает про коллекции, мапы и пр.
-        // TODO: он должен будет как-то поддерживвть blacklisting полей и методов на случай  Object getThis() { return this; } ?
-        ObjectMatcher<Object> recursiveFieldsMatcher = object(Object.class);
-        recursiveFieldsMatcher.allFieldsAre(recursiveFieldsMatcher);
-        return object(tClass).allFieldsAre(recursiveFieldsMatcher);
-    }
-
-    // TODO: beanWithPrivateFields
-
-    public static <T> ObjectMatcher<T> beanWithGetters(Class<T> tClass) {
-        ObjectMatcher<Object> recursiveGettersMatcher = object(Object.class);
-        recursiveGettersMatcher.allMethodsThatReturnNonVoidReturn(recursiveGettersMatcher);
-        return object(tClass).allMethodsThatReturnNonVoidReturn(recursiveGettersMatcher);
-    }
-
-    // TODO: beanWithPrivateGetters?
 }

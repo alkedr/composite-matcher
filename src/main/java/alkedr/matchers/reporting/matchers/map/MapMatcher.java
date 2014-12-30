@@ -1,7 +1,7 @@
 package alkedr.matchers.reporting.matchers.map;
 
 import alkedr.matchers.reporting.matchers.ValueExtractingMatcher;
-import alkedr.matchers.reporting.matchers.ValuesExtractor;
+import alkedr.matchers.reporting.matchers.ValueExtractor;
 import alkedr.matchers.reporting.matchers.map.extractors.MapAllValuesExtractor;
 import alkedr.matchers.reporting.matchers.map.extractors.MapSizeExtractor;
 import alkedr.matchers.reporting.matchers.map.extractors.MapValueExtractor;
@@ -36,9 +36,9 @@ public class MapMatcher<T, U> extends ValueExtractingMatcher<Map<T, U>> {
 
 
     public class EntryCheckAdder {
-        private final ValuesExtractor<Map<T, U>> extractor;
+        private final ValueExtractor<Map<T, U>> extractor;
 
-        private EntryCheckAdder(ValuesExtractor<Map<T, U>> extractor) {
+        private EntryCheckAdder(ValueExtractor<Map<T, U>> extractor) {
             this.extractor = extractor;
         }
 

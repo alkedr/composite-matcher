@@ -1,14 +1,11 @@
 package alkedr.matchers.reporting.matchers.map.extractors;
 
 import alkedr.matchers.reporting.checks.ExtractedValue;
-import alkedr.matchers.reporting.matchers.ValuesExtractor;
+import alkedr.matchers.reporting.matchers.ValueExtractor;
 
-import java.util.List;
 import java.util.Map;
 
-import static java.util.Arrays.asList;
-
-public class MapSizeExtractor<T, U> implements ValuesExtractor<Map<T, U>> {
+public class MapSizeExtractor<T, U> implements ValueExtractor<Map<T, U>> {
     private final String name;
 
     public MapSizeExtractor(String name) {
@@ -16,7 +13,7 @@ public class MapSizeExtractor<T, U> implements ValuesExtractor<Map<T, U>> {
     }
 
     @Override
-    public List<ExtractedValue> extractValues(Map<T, U> item) {
-        return asList(new ExtractedValue(name, item.size()));
+    public ExtractedValue extractValue(Map<T, U> item) {
+        return new ExtractedValue(name, item.size());
     }
 }

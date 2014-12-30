@@ -1,14 +1,13 @@
 package alkedr.matchers.reporting.matchers.object.extractors;
 
-import alkedr.matchers.reporting.checks.ExtractedValue;
-import alkedr.matchers.reporting.matchers.ValuesExtractor;
+import alkedr.matchers.reporting.matchers.ValueExtractor;
+import alkedr.matchers.reporting.matchers.ValueExtractorsExtractor;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AllMethodsThatReturnNonVoidExtractor<T> implements ValuesExtractor<T> {
+public class AllMethodsThatReturnNonVoidExtractor<T> implements ValueExtractorsExtractor<T> {
     private final Class<T> tClass;
 
     public AllMethodsThatReturnNonVoidExtractor(Class<T> tClass) {
@@ -16,16 +15,17 @@ public class AllMethodsThatReturnNonVoidExtractor<T> implements ValuesExtractor<
     }
 
     @Override
-    public List<ExtractedValue> extractValues(Object item) {   // FIXME: what if getter throws?
-        List<ExtractedValue> result = new ArrayList<>();
+    public List<ValueExtractor<T>> extractValueExtractors(Object item) {   // FIXME: what if getter throws?
+        List<ValueExtractor<T>> result = new ArrayList<>();
         for (Method method : item == null ? tClass.getMethods() : item.getClass().getMethods()) {
             if (isGoodGetter(method)) {
-                try {
+//                try {
                     method.setAccessible(true);
-                    result.add(new ExtractedValue(getterNameToPropertyName(method.getName()), item == null ? null : method.invoke(item)));
-                } catch (IllegalAccessException | InvocationTargetException ignored) {
-                    result.add(new ExtractedValue(getterNameToPropertyName(method.getName()), null, ExtractedValue.Status.MISSING));
-                }
+                    // TODO
+//                    result.add(new ExtractedValue(getterNameToPropertyName(method.getName()), item == null ? null : method.invoke(item)));
+//                } catch (IllegalAccessException | InvocationTargetException ignored) {
+//                    result.add(new ExtractedValue(getterNameToPropertyName(method.getName()), null, ExtractedValue.Status.MISSING));
+//                }
             }
         }
         return result;

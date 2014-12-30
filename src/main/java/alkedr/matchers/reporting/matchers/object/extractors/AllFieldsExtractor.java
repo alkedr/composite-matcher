@@ -1,7 +1,7 @@
 package alkedr.matchers.reporting.matchers.object.extractors;
 
-import alkedr.matchers.reporting.checks.ExtractedValue;
-import alkedr.matchers.reporting.matchers.ValuesExtractor;
+import alkedr.matchers.reporting.matchers.ValueExtractor;
+import alkedr.matchers.reporting.matchers.ValueExtractorsExtractor;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -9,7 +9,7 @@ import java.util.List;
 
 import static java.lang.reflect.Modifier.isStatic;
 
-public class AllFieldsExtractor<T> implements ValuesExtractor<T> {
+public class AllFieldsExtractor<T> implements ValueExtractorsExtractor<T> {
     private final Class<T> tClass;
 
     public AllFieldsExtractor(Class<T> tClass) {
@@ -17,16 +17,12 @@ public class AllFieldsExtractor<T> implements ValuesExtractor<T> {
     }
 
     @Override
-    public List<ExtractedValue> extractValues(T item) {
-        List<ExtractedValue> result = new ArrayList<>();
+    public List<ValueExtractor<T>> extractValueExtractors(T item) {
+        List<ValueExtractor<T>> result = new ArrayList<>();
         for (Field field : tClass.getDeclaredFields()) {
             if (!isStatic(field.getModifiers())) {
                 field.setAccessible(true);
-                try {
-                    result.add(new ExtractedValue(field.getName(), field.get(item)));
-                } catch (IllegalAccessException ignored) {   // TODO: report extraction errors
-                    result.add(new ExtractedValue(field.getName(), null, ExtractedValue.Status.MISSING));
-                }
+                result.add(new FieldExtractor<T, Object>(field.getName(), field.getName()));
             }
         }
         return result;

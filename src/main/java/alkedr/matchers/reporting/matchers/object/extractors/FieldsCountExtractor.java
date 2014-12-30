@@ -1,15 +1,13 @@
 package alkedr.matchers.reporting.matchers.object.extractors;
 
 import alkedr.matchers.reporting.checks.ExtractedValue;
-import alkedr.matchers.reporting.matchers.ValuesExtractor;
+import alkedr.matchers.reporting.matchers.ValueExtractor;
 
 import java.lang.reflect.Field;
-import java.util.List;
 
 import static java.lang.reflect.Modifier.isStatic;
-import static java.util.Arrays.asList;
 
-public class FieldsCountExtractor<T> implements ValuesExtractor<T> {
+public class FieldsCountExtractor<T> implements ValueExtractor<T> {
     private final Class<T> tClass;
     private final String valueName;
 
@@ -19,13 +17,13 @@ public class FieldsCountExtractor<T> implements ValuesExtractor<T> {
     }
 
     @Override
-    public List<ExtractedValue> extractValues(Object item) {
+    public ExtractedValue extractValue(Object item) {
         int actualFieldsCount = 0;
         for (Field field : tClass.getFields()) {
             if (!isStatic(field.getModifiers())) {
                 actualFieldsCount++;
             }
         }
-        return asList(new ExtractedValue(valueName, actualFieldsCount));
+        return new ExtractedValue(valueName, actualFieldsCount);
     }
 }

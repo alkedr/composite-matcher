@@ -14,8 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static alkedr.matchers.reporting.matchers.object.ObjectMatcher.beanWithGetters;
-import static alkedr.matchers.reporting.matchers.object.ObjectMatcher.object;
+import static alkedr.matchers.reporting.ReportingMatchers.beanWithGetters;
+import static alkedr.matchers.reporting.ReportingMatchers.object;
 import static ch.lambdaj.Lambda.on;
 import static java.lang.reflect.Modifier.isStatic;
 
