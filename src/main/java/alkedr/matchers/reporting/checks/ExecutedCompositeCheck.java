@@ -11,24 +11,24 @@ import static java.util.Collections.unmodifiableList;
  */
 public class ExecutedCompositeCheck implements ExecutedCheck {
     @NotNull private final ExtractedValue extractedValue;
-    private final boolean isSuccessful;
+    private final Status status;
     @NotNull private final List<ExecutedSimpleCheck> simpleChecks;
     @NotNull private final List<ExecutedCompositeCheck> compositeChecks;
 
 
-    public ExecutedCompositeCheck(@NotNull ExtractedValue extractedValue, boolean isSuccessful,
+    public ExecutedCompositeCheck(@NotNull ExtractedValue extractedValue, Status status,
                                   @NotNull List<ExecutedSimpleCheck> simpleChecks,
                                   @NotNull List<ExecutedCompositeCheck> compositeChecks) {
         this.extractedValue = extractedValue;
-        this.isSuccessful = isSuccessful;
+        this.status = status;
         this.simpleChecks = simpleChecks;
         this.compositeChecks = compositeChecks;
     }
 
 
     @Override
-    public boolean isSuccessful() {
-        return isSuccessful;
+    public Status getStatus() {
+        return status;
     }
 
     /**

@@ -1,5 +1,6 @@
 package alkedr.matchers.reporting.reporters;
 
+import alkedr.matchers.reporting.checks.ExecutedCheck;
 import alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
 import alkedr.matchers.reporting.checks.ExecutedSimpleCheck;
 
@@ -22,7 +23,7 @@ public class HtmlReporter implements Reporter {
     }
 
     private static String generateExecutedCompositeCheckReport(ExecutedCompositeCheck check) {
-        return  "<div class='node " + check.getExtractedValue().getStatus().toString().toLowerCase() + " " + (check.isSuccessful() ? "passed" : "failed") + "'>" +
+        return  "<div class='node " + check.getExtractedValue().getStatus().toString().toLowerCase() + " " + check.getStatus().toString().toLowerCase() + "'>" +
                     generateNameValue(check) +
                     "<div class='checks'>" +
                         generateMatchersTable(check) +
@@ -44,18 +45,18 @@ public class HtmlReporter implements Reporter {
     private static String generateMatchersTable(ExecutedCompositeCheck check) {
         StringBuilder stringBuilder = new StringBuilder("<table class='matchers' style='border-spacing: 0px;'>");
         for (ExecutedSimpleCheck simpleCheck : check.getSimpleChecks()) {
-            if (simpleCheck.isSuccessful()) {
-                stringBuilder
-                        .append("<tr class='matcher passed'><td class='image'>✔</td><td class='description'>")
-                        .append(escapeHtml4(simpleCheck.getMatcherDescription()))
-                        .append("</td></tr>");
-            } else {
+            if (simpleCheck.getStatus() == ExecutedCheck.Status.FAILED) {
                 stringBuilder
                         .append("<tr class='matcher failed'><td class='image'>×</td><td class='description'>")
                         .append(escapeHtml4(simpleCheck.getMatcherDescription()))
                         .append("</td></tr>")
                         .append("<tr class='matcher failed'><td></td><td class='mismatch-description'>")
                         .append(escapeHtml4(simpleCheck.getMismatchDescription()))
+                        .append("</td></tr>");
+            } else {
+                stringBuilder
+                        .append("<tr class='matcher passed'><td class='image'>✔</td><td class='description'>")
+                        .append(escapeHtml4(simpleCheck.getMatcherDescription()))
                         .append("</td></tr>");
             }
         }

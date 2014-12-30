@@ -16,8 +16,8 @@ public class ExecutedSimpleCheck implements ExecutedCheck {
     }
 
     @Override
-    public boolean isSuccessful() {
-        return mismatchDescription == null;
+    public Status getStatus() {
+        return mismatchDescription == null ? Status.PASSED : Status.FAILED;
     }
 
     @NotNull

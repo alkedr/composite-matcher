@@ -1,6 +1,7 @@
 package alkedr.matchers.reporting;
 
 import alkedr.matchers.reporting.checks.CheckExecutor;
+import alkedr.matchers.reporting.checks.ExecutedCheck;
 import alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
 import alkedr.matchers.reporting.reporters.PlainTextReporter;
 import org.hamcrest.BaseMatcher;
@@ -17,7 +18,7 @@ public abstract class BaseReportingMatcher<T> extends BaseMatcher<T> implements 
         lastItem = item;
         lastReport = getReport(item);
         CheckExecutor.INNER_CHECK_RESULT.set(lastReport);
-        return lastReport.isSuccessful();
+        return lastReport.getStatus() != ExecutedCheck.Status.FAILED;
     }
 
     @Override

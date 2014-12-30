@@ -12,7 +12,7 @@ import java.util.Map;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.equalTo;
 
-public class MapMatcher<T, U> extends ValueExtractingMatcher<Map<T, U>> {
+public class MapMatcher<T, U> extends ValueExtractingMatcher<Map<T, U>, MapMatcher<T, U>> {
 
     public MapMatcher() {
         super(Map.class);

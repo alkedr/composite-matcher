@@ -15,15 +15,15 @@ import static java.util.Arrays.asList;
  * User: alkedr
  * Date: 30.12.2014
  */
-public class ValueExtractingMatcher<T> extends TypeSafeReportingMatcher<T> {
+public class ValueExtractingMatcher<T, U extends ValueExtractingMatcher<T, ?>> extends TypeSafeReportingMatcher<T> {
     private final List<PlannedCheck> plannedChecks = new ArrayList<>();
 
     public ValueExtractingMatcher(Class<? super T> tClass) {
         super(tClass);
     }
 
-    protected void addPlannedCheck(final ValueExtractor<T> extractor, Collection<? extends Matcher<?>> newMatchers) {
-        addPlannedCheck(new ValueExtractorsExtractor<T>() {
+    protected U addPlannedCheck(final ValueExtractor<T> extractor, Collection<? extends Matcher<?>> newMatchers) {
+        return addPlannedCheck(new ValueExtractorsExtractor<T>() {
             @Override
             public List<ValueExtractor<T>> extractValueExtractors(T item) {
                 return asList(extractor);
@@ -31,8 +31,9 @@ public class ValueExtractingMatcher<T> extends TypeSafeReportingMatcher<T> {
         }, newMatchers);
     }
 
-    protected void addPlannedCheck(ValueExtractorsExtractor<T> extractor, Collection<? extends Matcher<?>> newMatchers) {
+    protected U addPlannedCheck(ValueExtractorsExtractor<T> extractor, Collection<? extends Matcher<?>> newMatchers) {
         plannedChecks.add(new PlannedCheck((ValueExtractorsExtractor<Object>)extractor, (Collection<Matcher<Object>>) newMatchers));
+        return (U) this;
     }
 
 

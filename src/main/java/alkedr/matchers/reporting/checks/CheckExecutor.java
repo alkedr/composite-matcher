@@ -13,7 +13,6 @@ import java.util.List;
  */
 public class CheckExecutor<T> {
     @NotNull private final ExtractedValue extractedValue;
-    private boolean isSuccessful = true;
     @NotNull private final List<ExecutedSimpleCheck> simpleChecks = new ArrayList<>();
     @NotNull private final List<ExecutedCompositeCheck> compositeChecks = new ArrayList<>();
 
@@ -37,7 +36,6 @@ public class CheckExecutor<T> {
 
     public void addCompositeCheck(ExecutedCompositeCheck check) {
         compositeChecks.add(check);
-        isSuccessful &= check.isSuccessful();
     }
 
     public void addDataFrom(ExecutedCompositeCheck check) {
@@ -48,7 +46,21 @@ public class CheckExecutor<T> {
 
     public ExecutedCompositeCheck buildCompositeCheck() {
         // TODO: объединить проверки с одинаковым именем, переименовать проверки с одинаковым именем и значением
-        return new ExecutedCompositeCheck(extractedValue, isSuccessful, simpleChecks, compositeChecks);
+        return new ExecutedCompositeCheck(extractedValue, calculateStatus(), simpleChecks, compositeChecks);
+    }
+
+    private ExecutedCheck.Status calculateStatus() {
+        boolean hasPassed = false;
+        for (ExecutedCheck check : simpleChecks) {
+            if (check.getStatus() == ExecutedCheck.Status.FAILED) return ExecutedCheck.Status.FAILED;
+            if (check.getStatus() == ExecutedCheck.Status.PASSED) hasPassed = true;
+        }
+        for (ExecutedCheck check : compositeChecks) {
+            if (check.getStatus() == ExecutedCheck.Status.FAILED) return ExecutedCheck.Status.FAILED;
+            if (check.getStatus() == ExecutedCheck.Status.PASSED) hasPassed = true;
+        }
+        if (hasPassed) return ExecutedCheck.Status.PASSED;
+        return ExecutedCheck.Status.UNCHECKED;
     }
 
 
@@ -63,7 +75,6 @@ public class CheckExecutor<T> {
                         matcherResult ? null : getMismatchDescription(matcher, extractedValue.getValue())));
             }
         }
-        isSuccessful &= matcherResult;
         return matcherResult;
     }
 

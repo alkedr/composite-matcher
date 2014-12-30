@@ -14,7 +14,7 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.any;
 import static org.hamcrest.Matchers.equalTo;
 
-public class ObjectMatcher<T> extends ValueExtractingMatcher<T> {
+public class ObjectMatcher<T> extends ValueExtractingMatcher<T, ObjectMatcher<T>> {
     public ObjectMatcher(Class<T> tClass) {
         super(tClass);
     }
@@ -22,7 +22,7 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T> {
 
     public <U> PlannedCheckAdder<U> property(String nameForReport, U lambdajArgumentPlaceholder) {
         Argument<U> argument = argument(lambdajArgumentPlaceholder);
-        return new PlannedCheckAdder<>(new LambdajPropertyExtractor<T, U>(nameForReport == null ? argument.getInkvokedPropertyName() : nameForReport, argument));
+        return new PlannedCheckAdder<>(new LambdajArgumentExtractor<T, U>(nameForReport == null ? argument.getInkvokedPropertyName() : nameForReport, argument));
     }
 
     public <U> PlannedCheckAdder<U> property(U lambdajArgumentPlaceholder) {
