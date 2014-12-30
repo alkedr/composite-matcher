@@ -22,6 +22,10 @@ public class IterableMatcher<T> extends TypeSafeReportingMatcher<Iterable<T>> {
     private final List<Matcher<? super T>> matchersForEveryElement = new ArrayList<>();
     private final Map<Matcher<? super T>, List<Matcher<? super Iterable<T>>>> sublistSelectorToMatcher = new LinkedHashMap<>();
 
+    public IterableMatcher() {
+        super(Iterable.class);
+    }
+
 
     public IterableMatcher<T> hasItem(T value) {
         return hasItem(equalTo(value));

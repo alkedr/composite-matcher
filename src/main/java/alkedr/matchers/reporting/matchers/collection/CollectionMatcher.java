@@ -12,6 +12,10 @@ import java.util.Collection;
  */
 public class CollectionMatcher<T> extends TypeSafeReportingMatcher<Collection<T>> {
 
+    public CollectionMatcher() {
+        super(Collection.class);
+    }
+
     @Override
     public ExecutedCompositeCheck getReportSafely(@Nullable Collection<T> item) {
         return null;

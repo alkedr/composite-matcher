@@ -8,9 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AllMethodsThatReturnNonVoidExtractor<T> implements ValueExtractorsExtractor<T> {
-    private final Class<T> tClass;
+    private final Class<? super T> tClass;
 
-    public AllMethodsThatReturnNonVoidExtractor(Class<T> tClass) {
+    public AllMethodsThatReturnNonVoidExtractor(Class<? super T> tClass) {
         this.tClass = tClass;
     }
 

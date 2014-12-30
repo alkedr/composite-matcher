@@ -18,6 +18,10 @@ import static java.util.Arrays.asList;
 public class ValueExtractingMatcher<T> extends TypeSafeReportingMatcher<T> {
     private final List<PlannedCheck> plannedChecks = new ArrayList<>();
 
+    public ValueExtractingMatcher(Class<? super T> tClass) {
+        super(tClass);
+    }
+
     protected void addPlannedCheck(final ValueExtractor<T> extractor, Collection<? extends Matcher<?>> newMatchers) {
         addPlannedCheck(new ValueExtractorsExtractor<T>() {
             @Override

@@ -14,6 +14,10 @@ import static org.hamcrest.Matchers.equalTo;
 
 public class MapMatcher<T, U> extends ValueExtractingMatcher<Map<T, U>> {
 
+    public MapMatcher() {
+        super(Map.class);
+    }
+
     public EntryCheckAdder valueOf(T key) {
         return new EntryCheckAdder(new MapValueExtractor<T, U>(key));
     }

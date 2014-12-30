@@ -8,10 +8,10 @@ import java.lang.reflect.Field;
 import static java.lang.reflect.Modifier.isStatic;
 
 public class FieldsCountExtractor<T> implements ValueExtractor<T> {
-    private final Class<T> tClass;
+    private final Class<? super T> tClass;
     private final String valueName;
 
-    public FieldsCountExtractor(Class<T> tClass, String valueName) {
+    public FieldsCountExtractor(Class<? super T> tClass, String valueName) {
         this.tClass = tClass;
         this.valueName = valueName;
     }

@@ -1,28 +1,22 @@
 package alkedr.matchers.reporting.matchers.object;
 
-import alkedr.matchers.reporting.checks.CheckExecutor;
-import alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
-import alkedr.matchers.reporting.checks.ExtractedValue;
 import alkedr.matchers.reporting.matchers.ValueExtractingMatcher;
 import alkedr.matchers.reporting.matchers.ValueExtractor;
 import alkedr.matchers.reporting.matchers.ValueExtractorsExtractor;
 import alkedr.matchers.reporting.matchers.object.extractors.*;
 import ch.lambdaj.function.argument.Argument;
 import org.hamcrest.Matcher;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
 import static ch.lambdaj.Lambda.argument;
 import static java.util.Arrays.asList;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.any;
+import static org.hamcrest.Matchers.equalTo;
 
 public class ObjectMatcher<T> extends ValueExtractingMatcher<T> {
-    private final Class<T> tClass;
-
-
     public ObjectMatcher(Class<T> tClass) {
-        this.tClass = tClass;
+        super(tClass);
     }
 
 
@@ -55,13 +49,13 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T> {
     }
 
     public ObjectMatcher<T> allMethodsThatReturnNonVoidReturn(Matcher<? super Object> matcher) {
-        addPlannedCheck(new AllMethodsThatReturnNonVoidExtractor<>(tClass), asList(matcher));
+        addPlannedCheck(new AllMethodsThatReturnNonVoidExtractor<>(getActualItemClass()), asList(matcher));
         return this;
     }
 
 
     public ObjectMatcher<T> fieldsCountIs(Matcher<? super Integer> valueMatcher) {
-        addPlannedCheck(new FieldsCountExtractor<T>(tClass, "<fields count>"), asList(valueMatcher));
+        addPlannedCheck(new FieldsCountExtractor<T>(getActualItemClass(), "<fields count>"), asList(valueMatcher));
         return this;
     }
 
@@ -112,14 +106,5 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T> {
             addPlannedCheck(extractor, asList(matcher));
             return ObjectMatcher.this;
         }
-    }
-
-
-    @Override
-    public ExecutedCompositeCheck getReportSafely(@Nullable T item) {
-        CheckExecutor<T> executor = new CheckExecutor<>(new ExtractedValue("", item));
-        executor.checkAndReportIfDoesntMatch(isA(tClass));
-        executor.addDataFrom(super.getReportSafely(item));
-        return executor.buildCompositeCheck();
     }
 }
