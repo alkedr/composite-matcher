@@ -3,10 +3,15 @@ package alkedr.matchers.reporting.matchers.object;
 import alkedr.matchers.reporting.matchers.ValueExtractingMatcher;
 import alkedr.matchers.reporting.matchers.ValueExtractor;
 import alkedr.matchers.reporting.matchers.ValueExtractorsExtractor;
-import alkedr.matchers.reporting.matchers.object.extractors.*;
+import alkedr.matchers.reporting.matchers.object.extractors.fields.FieldExtractor;
+import alkedr.matchers.reporting.matchers.object.extractors.fields.FieldsWithMatchingNameExtractor;
+import alkedr.matchers.reporting.matchers.object.extractors.lambdaj.LambdajArgumentExtractor;
+import alkedr.matchers.reporting.matchers.object.extractors.methods.AllMethodsThatReturnNonVoidExtractor;
 import ch.lambdaj.function.argument.Argument;
+import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 import static ch.lambdaj.Lambda.argument;
@@ -31,12 +36,17 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T, ObjectMatcher<T>
 
 
     public PlannedChecksAdder fields(Matcher<String> fieldNameMatcher) {
-        return new PlannedChecksAdder(new FieldsExtractor<T>(fieldNameMatcher));
+        return new PlannedChecksAdder(new FieldsWithMatchingNameExtractor<>(getActualItemClass(), new FeatureMatcher<Field, String>(fieldNameMatcher, "", "") {
+            @Override
+            protected String featureValueOf(Field actual) {
+                return actual.getName();
+            }
+        }));
     }
 
 
     public <U> PlannedCheckAdder<U> field(String nameForReport, String nameForValueExtraction) {
-        return new PlannedCheckAdder<>(new FieldExtractor<T, U>(nameForReport, nameForValueExtraction));
+        return new PlannedCheckAdder<>(new FieldExtractor<T, U>(getActualItemClass(), nameForReport, nameForValueExtraction));
     }
 
     public <U> PlannedCheckAdder<U> field(String nameForReportAndValueExtraction) {
@@ -52,17 +62,6 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T, ObjectMatcher<T>
         addPlannedCheck(new AllMethodsThatReturnNonVoidExtractor<>(getActualItemClass()), asList(matcher));
         return this;
     }
-
-
-    public ObjectMatcher<T> fieldsCountIs(Matcher<? super Integer> valueMatcher) {
-        addPlannedCheck(new FieldsCountExtractor<>(getActualItemClass(), "<fields count>"), asList(valueMatcher));
-        return this;
-    }
-
-    public ObjectMatcher<T> fieldsCountIs(int value) {
-        return fieldsCountIs(equalTo(value));
-    }
-
 
 
     public class PlannedCheckAdder<U> {

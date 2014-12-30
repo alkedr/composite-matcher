@@ -1,4 +1,4 @@
-package alkedr.matchers.reporting.matchers.object.extractors;
+package alkedr.matchers.reporting.matchers.object.extractors.lambdaj;
 
 import alkedr.matchers.reporting.checks.ExtractedValue;
 import alkedr.matchers.reporting.matchers.ValueExtractor;
