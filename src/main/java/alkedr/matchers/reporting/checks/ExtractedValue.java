@@ -3,7 +3,7 @@ package alkedr.matchers.reporting.checks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static alkedr.matchers.reporting.checks.ExtractedValue.Status.*;
+import static alkedr.matchers.reporting.checks.ExtractedValue.Status.NORMAL;
 
 /**
  * User: alkedr
@@ -13,11 +13,17 @@ public class ExtractedValue {
     @NotNull private final String name;
     @Nullable private final Object value;
     @NotNull private final Status status;
+    @Nullable private final Throwable throwable;
 
-    public ExtractedValue(@NotNull String name, @Nullable Object value, @NotNull Status status) {
+    public ExtractedValue(@NotNull String name, @Nullable Object value, @NotNull Status status, @Nullable Throwable throwable) {
         this.name = name;
         this.value = value;
         this.status = status;
+        this.throwable = throwable;
+    }
+
+    public ExtractedValue(@NotNull String name, @Nullable Object value, @NotNull Status status) {
+        this(name, value, status, null);
     }
 
     public ExtractedValue(@NotNull String name, @Nullable Object value) {
@@ -37,6 +43,11 @@ public class ExtractedValue {
     @NotNull
     public Status getStatus() {
         return status;
+    }
+
+    @Nullable
+    public Throwable getThrowable() {
+        return throwable;
     }
 
 
@@ -63,6 +74,7 @@ public class ExtractedValue {
         NORMAL,
         MISSING,
         UNEXPECTED,
+        ERROR,
         ;
     }
 }

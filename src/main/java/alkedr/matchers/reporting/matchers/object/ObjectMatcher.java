@@ -4,9 +4,9 @@ import alkedr.matchers.reporting.matchers.ValueExtractingMatcher;
 import alkedr.matchers.reporting.matchers.ValueExtractor;
 import alkedr.matchers.reporting.matchers.ValueExtractorsExtractor;
 import alkedr.matchers.reporting.matchers.object.extractors.fields.FieldExtractor;
-import alkedr.matchers.reporting.matchers.object.extractors.fields.FieldsWithMatchingNameExtractor;
+import alkedr.matchers.reporting.matchers.object.extractors.fields.FieldsExtractor;
 import alkedr.matchers.reporting.matchers.object.extractors.lambdaj.LambdajArgumentExtractor;
-import alkedr.matchers.reporting.matchers.object.extractors.methods.AllMethodsThatReturnNonVoidExtractor;
+import alkedr.matchers.reporting.matchers.object.extractors.methods.GettersExtractor;
 import ch.lambdaj.function.argument.Argument;
 import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;
@@ -36,7 +36,7 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T, ObjectMatcher<T>
 
 
     public PlannedChecksAdder fields(Matcher<String> fieldNameMatcher) {
-        return new PlannedChecksAdder(new FieldsWithMatchingNameExtractor<>(getActualItemClass(), new FeatureMatcher<Field, String>(fieldNameMatcher, "", "") {
+        return new PlannedChecksAdder(new FieldsExtractor<>(getActualItemClass(), new FeatureMatcher<Field, String>(fieldNameMatcher, "", "") {
             @Override
             protected String featureValueOf(Field actual) {
                 return actual.getName();
@@ -46,7 +46,7 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T, ObjectMatcher<T>
 
 
     public <U> PlannedCheckAdder<U> field(String nameForReport, String nameForValueExtraction) {
-        return new PlannedCheckAdder<>(new FieldExtractor<T, U>(getActualItemClass(), nameForReport, nameForValueExtraction));
+        return new PlannedCheckAdder<>(new FieldExtractor<T>(getActualItemClass(), nameForReport, nameForValueExtraction));
     }
 
     public <U> PlannedCheckAdder<U> field(String nameForReportAndValueExtraction) {
@@ -59,7 +59,7 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T, ObjectMatcher<T>
     }
 
     public ObjectMatcher<T> allMethodsThatReturnNonVoidReturn(Matcher<? super Object> matcher) {
-        addPlannedCheck(new AllMethodsThatReturnNonVoidExtractor<>(getActualItemClass()), asList(matcher));
+        addPlannedCheck(new GettersExtractor<>(getActualItemClass()), asList(matcher));
         return this;
     }
 

@@ -4,6 +4,7 @@ import alkedr.matchers.reporting.checks.ExecutedCheck;
 import alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
 import alkedr.matchers.reporting.checks.ExecutedSimpleCheck;
 
+// TODO: report getExtractedValue().getThrowable()
 public class PlainTextReporter<T> implements Reporter {
     @Override
     public String reportCheck(ExecutedCompositeCheck check) {

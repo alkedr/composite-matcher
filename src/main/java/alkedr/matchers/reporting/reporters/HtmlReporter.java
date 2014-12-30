@@ -8,6 +8,7 @@ import java.util.Scanner;
 
 import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
 
+// TODO: report getExtractedValue().getThrowable()
 public class HtmlReporter implements Reporter {
     @Override
     public String reportCheck(ExecutedCompositeCheck check) {

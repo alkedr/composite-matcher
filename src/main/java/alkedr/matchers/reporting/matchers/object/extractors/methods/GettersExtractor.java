@@ -1,37 +1,26 @@
 package alkedr.matchers.reporting.matchers.object.extractors.methods;
 
-import alkedr.matchers.reporting.checks.ExtractedValue;
 import alkedr.matchers.reporting.matchers.ValueExtractor;
 import alkedr.matchers.reporting.matchers.ValueExtractorsExtractor;
+import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AllMethodsThatReturnNonVoidExtractor<T> implements ValueExtractorsExtractor<T> {
+public class GettersExtractor<T> implements ValueExtractorsExtractor<T> {
     private final Class<? super T> tClass;
 
-    public AllMethodsThatReturnNonVoidExtractor(Class<? super T> tClass) {
+    public GettersExtractor(Class<? super T> tClass) {
         this.tClass = tClass;
     }
 
     @Override
-    public List<ValueExtractor<T>> extractValueExtractors(Object item) {   // FIXME: what if getter throws?
+    public List<ValueExtractor<T>> extractValueExtractors(@Nullable T item) {
         List<ValueExtractor<T>> result = new ArrayList<>();
-        for (final Method method : item == null ? tClass.getMethods() : item.getClass().getMethods()) {
+        for (Method method : tClass.getMethods()) {
             if (isGoodGetter(method)) {
-                method.setAccessible(true);
-                result.add(new ValueExtractor<T>() {
-                    @Override
-                    public ExtractedValue extractValue(T item) {
-                        try {
-                            return new ExtractedValue(getterNameToPropertyName(method.getName()), item == null ? null : method.invoke(item));
-                        } catch (IllegalAccessException | InvocationTargetException ignored) {
-                            return new ExtractedValue(getterNameToPropertyName(method.getName()), null, ExtractedValue.Status.MISSING);
-                        }
-                    }
-                });
+                result.add(new MethodExtractor<T>(getterNameToPropertyName(method.getName()), method));
             }
         }
         return result;

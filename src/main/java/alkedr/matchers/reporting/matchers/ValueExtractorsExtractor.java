@@ -1,5 +1,7 @@
 package alkedr.matchers.reporting.matchers;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
 
 /**
@@ -7,5 +9,5 @@ import java.util.List;
  * Date: 30.12.2014
  */
 public interface ValueExtractorsExtractor<T> {
-    List<ValueExtractor<T>> extractValueExtractors(T item);
+    List<ValueExtractor<T>> extractValueExtractors(@Nullable T item);
 }
