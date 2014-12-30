@@ -1,11 +1,11 @@
 package alkedr.matchers.reporting.matchers.object.extractors.properties;
 
+import alkedr.matchers.reporting.checks.ExtractedValue;
 import alkedr.matchers.reporting.matchers.ValueExtractor;
 import alkedr.matchers.reporting.matchers.ValueExtractorsExtractor;
 import alkedr.matchers.reporting.matchers.object.extractors.methods.MethodExtractor;
 import org.jetbrains.annotations.Nullable;
 
-import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,14 +21,19 @@ public class AllPropertiesExtractor<T> implements ValueExtractorsExtractor<T> {
 
     @Override
     public List<ValueExtractor<T>> extractValueExtractors(@Nullable T item) {
+        List<ValueExtractor<T>> result = new ArrayList<>();
         try {
-            List<ValueExtractor<T>> result = new ArrayList<>();
             for (PropertyDescriptor pd : getBeanInfo(tClass).getPropertyDescriptors()) {
                 result.add(new MethodExtractor<T>(pd.getName(), pd.getReadMethod()));
             }
-            return result;
-        } catch (IntrospectionException e) {
-            throw new RuntimeException(e);
+        } catch (final Throwable throwable) {
+            result.add(new ValueExtractor<T>() {
+                @Override
+                public ExtractedValue extractValue(@Nullable T item) {
+                    return new ExtractedValue("!<properties of " + tClass.getName() + ">!", null, ExtractedValue.Status.ERROR, throwable);
+                }
+            });
         }
+        return result;
     }
 }
