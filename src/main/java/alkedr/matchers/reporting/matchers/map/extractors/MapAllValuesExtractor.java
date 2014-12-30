@@ -11,8 +11,8 @@ public class MapAllValuesExtractor<T, U> implements ValueExtractorsExtractor<Map
     @Override
     public List<ValueExtractor<Map<T, U>>> extractValueExtractors(Map<T, U> item) {
         List<ValueExtractor<Map<T, U>>> result = new ArrayList<>();
-        for (Map.Entry<T, U> entry : item.entrySet()) {
-            result.add(new MapValueExtractor<T, U>(entry.getKey()));
+        for (T key : item.keySet()) {
+            result.add(new MapValueExtractor<T, U>(key));
         }
         return result;
     }

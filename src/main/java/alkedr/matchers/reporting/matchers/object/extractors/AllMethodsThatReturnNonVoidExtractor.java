@@ -1,8 +1,10 @@
 package alkedr.matchers.reporting.matchers.object.extractors;
 
+import alkedr.matchers.reporting.checks.ExtractedValue;
 import alkedr.matchers.reporting.matchers.ValueExtractor;
 import alkedr.matchers.reporting.matchers.ValueExtractorsExtractor;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,15 +19,19 @@ public class AllMethodsThatReturnNonVoidExtractor<T> implements ValueExtractorsE
     @Override
     public List<ValueExtractor<T>> extractValueExtractors(Object item) {   // FIXME: what if getter throws?
         List<ValueExtractor<T>> result = new ArrayList<>();
-        for (Method method : item == null ? tClass.getMethods() : item.getClass().getMethods()) {
+        for (final Method method : item == null ? tClass.getMethods() : item.getClass().getMethods()) {
             if (isGoodGetter(method)) {
-//                try {
-                    method.setAccessible(true);
-                    // TODO
-//                    result.add(new ExtractedValue(getterNameToPropertyName(method.getName()), item == null ? null : method.invoke(item)));
-//                } catch (IllegalAccessException | InvocationTargetException ignored) {
-//                    result.add(new ExtractedValue(getterNameToPropertyName(method.getName()), null, ExtractedValue.Status.MISSING));
-//                }
+                method.setAccessible(true);
+                result.add(new ValueExtractor<T>() {
+                    @Override
+                    public ExtractedValue extractValue(T item) {
+                        try {
+                            return new ExtractedValue(getterNameToPropertyName(method.getName()), item == null ? null : method.invoke(item));
+                        } catch (IllegalAccessException | InvocationTargetException ignored) {
+                            return new ExtractedValue(getterNameToPropertyName(method.getName()), null, ExtractedValue.Status.MISSING);
+                        }
+                    }
+                });
             }
         }
         return result;

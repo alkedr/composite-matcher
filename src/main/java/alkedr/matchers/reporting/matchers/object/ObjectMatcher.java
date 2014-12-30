@@ -55,7 +55,7 @@ public class ObjectMatcher<T> extends ValueExtractingMatcher<T> {
 
 
     public ObjectMatcher<T> fieldsCountIs(Matcher<? super Integer> valueMatcher) {
-        addPlannedCheck(new FieldsCountExtractor<T>(getActualItemClass(), "<fields count>"), asList(valueMatcher));
+        addPlannedCheck(new FieldsCountExtractor<>(getActualItemClass(), "<fields count>"), asList(valueMatcher));
         return this;
     }
 

@@ -17,7 +17,7 @@ public class FieldExtractor<T, U> implements ValueExtractor<T> {
     @Override
     public ExtractedValue extractValue(T item) {
         try {
-            Field field = item.getClass().getDeclaredField(nameForValueExtraction);  // TODO: проверить находятся ли поля родителей
+            Field field = item.getClass().getDeclaredField(nameForValueExtraction);  // TODO: проверить находятся ли поля родителей, использовать item.getClass().getSuperclass()
             field.setAccessible(true);
             return new ExtractedValue(nameForReport, field.get(item));
         } catch (NoSuchFieldException | IllegalAccessException ignored) {
