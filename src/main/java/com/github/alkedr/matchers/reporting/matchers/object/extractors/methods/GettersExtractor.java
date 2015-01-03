@@ -19,7 +19,7 @@ public class GettersExtractor<T> implements ValueExtractorsExtractor<T> {
     public List<ValueExtractor<T>> extractValueExtractors(@Nullable T item) {
         List<ValueExtractor<T>> result = new ArrayList<>();
         for (Method method : tClass.getMethods()) {
-            if (isGoodGetter(method)) {
+            if (isGoodGetter(method)) {  // TODO: construct Argument and use LambdajArgumentExtractor?
                 result.add(new MethodExtractor<T>(getterNameToPropertyName(method.getName()), method));
             }
         }

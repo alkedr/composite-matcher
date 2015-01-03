@@ -31,6 +31,6 @@ public abstract class BaseReportingMatcher<T> extends BaseMatcher<T> implements 
         if (!Objects.equals(lastItem, item)) {
             matches(item);
         }
-        description.appendText(new PlainTextReporter<T>().reportCheck(lastReport));
+        description.appendText(new PlainTextReporter().report(lastReport));
     }
 }

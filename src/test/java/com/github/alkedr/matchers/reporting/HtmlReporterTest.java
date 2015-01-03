@@ -1,14 +1,11 @@
 package com.github.alkedr.matchers.reporting;
 
-import com.github.alkedr.matchers.reporting.reporters.HtmlReporter;
-import com.github.alkedr.matchers.reporting.reporters.ObjectVisitor;
-import com.github.alkedr.matchers.reporting.reporters.ValuesEnumerator;
+import com.github.alkedr.matchers.reporting.reporters.PlainTextReporter;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,61 +14,14 @@ import java.util.Map;
 import static ch.lambdaj.Lambda.on;
 import static com.github.alkedr.matchers.reporting.ReportingMatchers.beanWithGetters;
 import static com.github.alkedr.matchers.reporting.ReportingMatchers.object;
-import static java.lang.reflect.Modifier.isStatic;
 
 @SuppressWarnings("JUnitTestMethodWithNoAssertions")
 public class HtmlReporterTest {
     @Test
     public void fastReportsTest() throws IOException {
-        ReportingMatcher<VeryComplexBean> matcher = veryComplexBeanMatcher();
         try (FileWriter fileWriter = new FileWriter("example-report.html")) {
-            fileWriter.write(new HtmlReporter().reportCheck(matcher.getReport(new VeryComplexBean())));
+            fileWriter.write(new PlainTextReporter().report(veryComplexBeanMatcher().getReport(new VeryComplexBean())));
         }
-    }
-
-    @Test
-    public void fastObjectVisitorTest() throws IOException {
-        new ObjectVisitor() {
-            private int indent = -1;
-            @Override protected void onObjectBegin() { indent++; System.out.println(); }
-            @Override protected void onObjectEnd()   { indent--; }
-            @Override protected void onMapBegin()    { indent++; System.out.println(); }
-            @Override protected void onMapEnd()      { indent--; }
-            @Override protected void onArrayBegin()  { indent++; System.out.println(); }
-            @Override protected void onArrayEnd()    { indent--; }
-            @Override
-            protected void onKey(String key) {
-                for (int i = 0; i < indent; i++) System.out.print("  ");
-                System.out.print(key + ": ");
-            }
-            @Override
-            protected void onPrimitiveValue(Object value) {
-                System.out.println(value);
-            }
-        }
-                .objectValuesEnumerator(new ValuesEnumerator<Object>() {
-                    @Override
-                    public void enumerateValues(Object o, Functor functor) {
-                        for (Field field : o.getClass().getDeclaredFields()) {
-                            if (!isStatic(field.getModifiers())) {
-                                field.setAccessible(true);
-                                try {
-                                    functor.call(field.getName(), field.get(o));
-                                } catch (IllegalAccessException ignored) {   // TODO: report extraction errors
-                                }
-                            }
-                        }
-                    }
-                })
-                .mapValuesEnumerator(new ValuesEnumerator<Map<Object, Object>>() {
-                    @Override
-                    public void enumerateValues(Map<Object, Object> map, Functor functor) {
-                        for (Map.Entry<Object, Object> entry : map.entrySet()) {
-                            functor.call(String.valueOf(entry.getKey()), entry.getValue());
-                        }
-                    }
-                })
-                .accept(new VeryComplexBean());
     }
 
     private static ReportingMatcher<VeryComplexBean> veryComplexBeanMatcher() {

@@ -52,10 +52,10 @@ public class ExtractedValue {
 
 
     @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (!(object instanceof ExtractedValue)) return false;
-        ExtractedValue that = (ExtractedValue) object;
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof ExtractedValue)) return false;
+        ExtractedValue that = (ExtractedValue) obj;
         if (!name.equals(that.name)) return false;
         if (status != that.status) return false;
         return value == that.value;
