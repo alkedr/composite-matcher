@@ -24,6 +24,13 @@ public class HtmlReporterTest {
         }
     }
 
+
+    // объекты, списки, мапы
+    // извлечённые-непроверенные, извлечённые-проверенные-правильные и извлечённые-проверенные-неправильные, неизвлечённые с разными ошибками
+    // только простые проверки, только сложные проверки, оба вида проверок
+
+
+
     private static ReportingMatcher<VeryComplexBean> veryComplexBeanMatcher() {
         return object(VeryComplexBean.class)
                 .<ComplexBean>field("correctField").is(correctComplexBean())
@@ -54,7 +61,7 @@ public class HtmlReporterTest {
         private final ComplexBean correctField = new ComplexBean();
         private final ComplexBean incorrectField = new ComplexBean();
         private final ComplexBean uncheckedField = new ComplexBean();
-        private final Map<Integer, String> map = new HashMap<>();
+        private final Map<Object, String> map = new HashMap<>();
         private final List<Double> list = new ArrayList<>();
 
         private VeryComplexBean() {

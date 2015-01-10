@@ -1,6 +1,6 @@
 package com.github.alkedr.matchers.reporting.matchers.iterable;
 
-import com.github.alkedr.matchers.reporting.TypeSafeReportingMatcher;
+import com.github.alkedr.matchers.reporting.ReportingMatcher;
 import com.github.alkedr.matchers.reporting.checks.CheckExecutor;
 import com.github.alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
 import com.github.alkedr.matchers.reporting.checks.ExtractedValue;
@@ -16,10 +16,14 @@ import static org.hamcrest.StringDescription.asString;
 /**
  * User: alkedr
  * Date: 22.12.2014
+ *
+ * Случаи:
+ *   - упорядоченный/неупорядоченный список
+ *   - разрешены/не разрешены лишние элементы
  */
-public class IterableMatcher<T> extends TypeSafeReportingMatcher<Iterable<T>> {
+public class IterableMatcher<T> extends ReportingMatcher<Iterable<T>> {
     private final List<Matcher<? super T>> elementMatchers = new ArrayList<>();
-    private final List<Matcher<? super T>> matchersForEveryElement = new ArrayList<>();
+    private final Collection<Matcher<? super T>> matchersForEveryElement = new ArrayList<>();
     private final Map<Matcher<? super T>, List<Matcher<? super Iterable<T>>>> sublistSelectorToMatcher = new LinkedHashMap<>();
 
     public IterableMatcher() {
@@ -78,7 +82,7 @@ public class IterableMatcher<T> extends TypeSafeReportingMatcher<Iterable<T>> {
     public ExecutedCompositeCheck getReportSafely(@Nullable Iterable<T> item) {
         CheckExecutor<T> executor = new CheckExecutor<>(new ExtractedValue("", item));
 
-        List<Matcher<? super T>> remainingMatchers = new LinkedList<>(elementMatchers);
+        Collection<Matcher<? super T>> remainingMatchers = new LinkedList<>(elementMatchers);
         if (item != null) {
             for (Map.Entry<Matcher<? super T>, List<Matcher<? super Iterable<T>>>> entry : sublistSelectorToMatcher.entrySet()) {
                 CheckExecutor<Iterable<T>> checkExecutorForFiltered = new CheckExecutor<>(new ExtractedValue(asString(entry.getKey()), filter(entry.getKey(), item)));

@@ -1,9 +1,8 @@
-package com.github.alkedr.matchers.reporting.matchers.object.extractors.properties;
+package com.github.alkedr.matchers.reporting.matchers.object.extractors;
 
 import com.github.alkedr.matchers.reporting.checks.ExtractedValue;
 import com.github.alkedr.matchers.reporting.matchers.ValueExtractor;
 import com.github.alkedr.matchers.reporting.matchers.ValueExtractorsExtractor;
-import com.github.alkedr.matchers.reporting.matchers.object.extractors.methods.MethodExtractor;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyDescriptor;

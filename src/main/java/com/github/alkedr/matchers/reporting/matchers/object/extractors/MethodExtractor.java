@@ -1,24 +1,29 @@
-package com.github.alkedr.matchers.reporting.matchers.object.extractors.lambdaj;
+package com.github.alkedr.matchers.reporting.matchers.object.extractors;
 
-import ch.lambdaj.function.argument.Argument;
 import com.github.alkedr.matchers.reporting.checks.ExtractedValue;
 import com.github.alkedr.matchers.reporting.matchers.ValueExtractor;
 import org.jetbrains.annotations.Nullable;
 
-public class LambdajArgumentExtractor<T, U> implements ValueExtractor<T> {
-    private final String nameForReport;
-    private final Argument<U> argument;
+import java.lang.reflect.Method;
 
-    public LambdajArgumentExtractor(String nameForReport, Argument<U> argument) {
+/**
+ * User: alkedr
+ * Date: 30.12.2014
+ */
+public class MethodExtractor<T> implements ValueExtractor<T> {
+    private final String nameForReport;
+    private final Method method;
+
+    public MethodExtractor(String nameForReport, Method method) {
         this.nameForReport = nameForReport;
-        this.argument = argument;
+        this.method = method;
     }
 
     @Override
     public ExtractedValue extractValue(@Nullable T item) {
         try {
             if (item == null) return new ExtractedValue(nameForReport, null, ExtractedValue.Status.MISSING);
-            return new ExtractedValue(nameForReport, argument.evaluate(item));
+            return new ExtractedValue(nameForReport, method.invoke(item));
         } catch (Throwable throwable) {
             return new ExtractedValue(nameForReport, null, ExtractedValue.Status.ERROR, throwable);
         }

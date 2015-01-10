@@ -1,4 +1,4 @@
-package com.github.alkedr.matchers.reporting.matchers.object.extractors.fields;
+package com.github.alkedr.matchers.reporting.matchers.object.extractors;
 
 import com.github.alkedr.matchers.reporting.matchers.ValueExtractor;
 import com.github.alkedr.matchers.reporting.matchers.ValueExtractorsExtractor;

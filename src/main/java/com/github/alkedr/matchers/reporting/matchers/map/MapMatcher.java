@@ -12,6 +12,11 @@ import java.util.Map;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.equalTo;
 
+/**
+ * Случаи:
+ *   - упорядоченный/неупорядоченный список  - юзаем IterableMatcher для entrySet()
+ *   - разрешены/не разрешены лишние элементы
+ */
 public class MapMatcher<T, U> extends ValueExtractingMatcher<Map<T, U>, MapMatcher<T, U>> {
 
     public MapMatcher() {

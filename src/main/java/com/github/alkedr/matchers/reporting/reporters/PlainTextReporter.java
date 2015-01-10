@@ -5,15 +5,22 @@ import com.github.alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
 import com.github.alkedr.matchers.reporting.checks.ExecutedSimpleCheck;
 import com.github.alkedr.matchers.reporting.checks.ExtractedValue;
 import org.hamcrest.Matcher;
+import org.jetbrains.annotations.Nullable;
 
 // TODO: report getExtractedValue().getThrowable()
 public class PlainTextReporter implements Reporter {
-    private Matcher<ExecutedCheck> checkMatcher;
+    @Nullable private Matcher<ExecutedCheck> checkMatcher = null;
 
     @Override
     public String report(ExecutedCompositeCheck check) {
         return generatePlainTextReport(check);
     }
+
+    public PlainTextReporter checkMatcher(@Nullable Matcher<ExecutedCheck> newCheckMatcher) {
+        checkMatcher = newCheckMatcher;
+        return this;
+    }
+
 
     private String generatePlainTextReport(ExecutedCompositeCheck check) {
         if (checkMatcher != null && checkMatcher.matches(check)) return "";
@@ -33,12 +40,8 @@ public class PlainTextReporter implements Reporter {
             if (checkMatcher == null || checkMatcher.matches(simpleCheck)) {
                 if (simpleCheck.getStatus() == ExecutedCheck.Status.FAILED) {
                     stringBuilder
-                            .append("Expected: ")
-                            .append(simpleCheck.getMatcherDescription())
-                            .append("\n")
-                            .append("     but: ")
-                            .append(simpleCheck.getMismatchDescription())
-                            .append("\n");
+                            .append("Expected: ").append(simpleCheck.getMatcherDescription()).append("\n")
+                            .append("     but: ").append(simpleCheck.getMismatchDescription()).append("\n");
                 } else {
                     stringBuilder
                             .append(simpleCheck.getStatus().toString().toLowerCase())

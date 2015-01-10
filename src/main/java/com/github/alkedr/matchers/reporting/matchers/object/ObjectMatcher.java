@@ -4,10 +4,10 @@ import ch.lambdaj.function.argument.Argument;
 import com.github.alkedr.matchers.reporting.matchers.ValueExtractingMatcher;
 import com.github.alkedr.matchers.reporting.matchers.ValueExtractor;
 import com.github.alkedr.matchers.reporting.matchers.ValueExtractorsExtractor;
-import com.github.alkedr.matchers.reporting.matchers.object.extractors.fields.FieldExtractor;
-import com.github.alkedr.matchers.reporting.matchers.object.extractors.fields.FieldsExtractor;
-import com.github.alkedr.matchers.reporting.matchers.object.extractors.lambdaj.LambdajArgumentExtractor;
-import com.github.alkedr.matchers.reporting.matchers.object.extractors.methods.GettersExtractor;
+import com.github.alkedr.matchers.reporting.matchers.object.extractors.FieldExtractor;
+import com.github.alkedr.matchers.reporting.matchers.object.extractors.FieldsExtractor;
+import com.github.alkedr.matchers.reporting.matchers.object.extractors.LambdajArgumentExtractor;
+import com.github.alkedr.matchers.reporting.matchers.object.extractors.GettersExtractor;
 import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;
 

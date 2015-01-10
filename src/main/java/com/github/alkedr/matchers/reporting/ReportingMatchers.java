@@ -8,7 +8,7 @@ import com.github.alkedr.matchers.reporting.matchers.object.ObjectMatcher;
  * User: alkedr
  * Date: 30.12.2014
  */
-public class ReportingMatchers {
+public final class ReportingMatchers {
     public static <T> ObjectMatcher<T> object(Class<T> tClass) {
         return new ObjectMatcher<>(tClass);
     }
