@@ -1,6 +1,6 @@
 package com.github.alkedr.matchers.reporting;
 
-import com.github.alkedr.matchers.reporting.reporters.PlainTextReporter;
+import com.github.alkedr.matchers.reporting.reporters.HtmlReporter;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 
@@ -12,15 +12,18 @@ import java.util.List;
 import java.util.Map;
 
 import static ch.lambdaj.Lambda.on;
-import static com.github.alkedr.matchers.reporting.ReportingMatchers.beanWithGetters;
-import static com.github.alkedr.matchers.reporting.ReportingMatchers.object;
+import static com.github.alkedr.matchers.reporting.ValueExtractingMatcher.*;
+import static com.github.alkedr.matchers.reporting.extractors.map.MapValueExtractor.valueOfKey;
+import static com.github.alkedr.matchers.reporting.extractors.object.FieldExtractor.field;
+import static com.github.alkedr.matchers.reporting.extractors.object.LambdajArgumentExtractor.resultOf;
+import static org.hamcrest.core.Is.is;
 
 @SuppressWarnings("JUnitTestMethodWithNoAssertions")
 public class HtmlReporterTest {
     @Test
     public void fastReportsTest() throws IOException {
         try (FileWriter fileWriter = new FileWriter("example-report.html")) {
-            fileWriter.write(new PlainTextReporter().report(veryComplexBeanMatcher().getReport(new VeryComplexBean())));
+            fileWriter.write(new HtmlReporter().report(veryComplexBeanMatcher().getReport(new VeryComplexBean())));
         }
     }
 
@@ -32,28 +35,33 @@ public class HtmlReporterTest {
 
 
     private static ReportingMatcher<VeryComplexBean> veryComplexBeanMatcher() {
+        map(Integer.class, Object.class)
+                .checkThat(valueOfKey(1), is(1))
+                .checkThat(valueOfKey(1), is(""))
+                ;
+
         return object(VeryComplexBean.class)
-                .<ComplexBean>field("correctField").is(correctComplexBean())
-                .<ComplexBean>field("incorrectField").is(incorrectComplexBean())
-                .<ComplexBean>field("uncheckedField").is(beanWithGetters(Object.class))
+                .checkThat(field(VeryComplexBean.class, "correctField"), correctComplexBean())
+                .checkThat(field(VeryComplexBean.class, "incorrectField"), incorrectComplexBean())
+                .checkThat(field(VeryComplexBean.class, "uncheckedField"), beanWithGetters(Object.class))
                 ;
     }
 
-    private static Matcher<? super ComplexBean> correctComplexBean() {
+    private static Matcher<ComplexBean> correctComplexBean() {
         return complexBean("3");
     }
 
-    private static Matcher<? super ComplexBean> incorrectComplexBean() {
+    private static Matcher<ComplexBean> incorrectComplexBean() {
         return complexBean("4");
     }
 
-    private static Matcher<? super ComplexBean> complexBean(String expectedStringPropertyValue) {
+    private static Matcher<ComplexBean> complexBean(String expectedStringPropertyValue) {
         ComplexBean on = on(ComplexBean.class);
         return beanWithGetters(ComplexBean.class)
-                .property(on.isBooleanField()).isEqualTo(false)
-                .property(on.getIntField()).isEqualTo(1)
-                .property(on.getLongField()).isEqualTo(2L)
-                .property(on.getStringField()).isEqualTo(expectedStringPropertyValue)
+                .checkThat(resultOf(on.isBooleanField()), is(false))
+                .checkThat(resultOf(on.getIntField()), is(1))
+                .checkThat(resultOf(on.getLongField()), is(2L))
+                .checkThat(resultOf(on.getStringField()), is(expectedStringPropertyValue))
                 ;
     }
 

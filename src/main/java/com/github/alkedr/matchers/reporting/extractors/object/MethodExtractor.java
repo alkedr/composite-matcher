@@ -1,7 +1,9 @@
-package com.github.alkedr.matchers.reporting.matchers.object.extractors;
+package com.github.alkedr.matchers.reporting.extractors.object;
 
 import com.github.alkedr.matchers.reporting.checks.ExtractedValue;
-import com.github.alkedr.matchers.reporting.matchers.ValueExtractor;
+import com.github.alkedr.matchers.reporting.extractors.ValueExtractor;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -10,7 +12,7 @@ import java.lang.reflect.Method;
  * User: alkedr
  * Date: 30.12.2014
  */
-public class MethodExtractor<T> implements ValueExtractor<T> {
+public class MethodExtractor<FromType, ReturnValueType> implements ValueExtractor<FromType, ReturnValueType> {
     private final String nameForReport;
     private final Method method;
 
@@ -20,12 +22,22 @@ public class MethodExtractor<T> implements ValueExtractor<T> {
     }
 
     @Override
-    public ExtractedValue extractValue(@Nullable T item) {
+    public ExtractedValue extractValue(@Nullable FromType item) {
         try {
             if (item == null) return new ExtractedValue(nameForReport, null, ExtractedValue.Status.MISSING);
             return new ExtractedValue(nameForReport, method.invoke(item));
         } catch (Throwable throwable) {
             return new ExtractedValue(nameForReport, null, ExtractedValue.Status.ERROR, throwable);
         }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return EqualsBuilder.reflectionEquals(this, obj);
+    }
+
+    @Override
+    public int hashCode() {
+        return HashCodeBuilder.reflectionHashCode(this);
     }
 }
