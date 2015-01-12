@@ -11,19 +11,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class MapAllValuesExtractor<Key, Value> implements ValueExtractorsExtractor<Map<Key, Value>, Value> {
+public class ValuesFromMapExtractor<Key, Value> implements ValueExtractorsExtractor<Map<Key, ? super Value>, Value> {
     @Nullable private final Matcher<Key> keyMatcher;
 
-    public MapAllValuesExtractor(@Nullable Matcher<Key> keyMatcher) {
+    public ValuesFromMapExtractor(@Nullable Matcher<Key> keyMatcher) {
         this.keyMatcher = keyMatcher;
     }
 
     @Override
-    public List<ValueExtractor<Map<Key, Value>, Value>> extractValueExtractors(Map<Key, Value> item) {
-        List<ValueExtractor<Map<Key, Value>, Value>> result = new ArrayList<>();
+    public List<ValueExtractor<Map<Key, ? super Value>, Value>> extractValueExtractors(@Nullable Map<Key, ? super Value> item) {
+        List<ValueExtractor<Map<Key, ? super Value>, Value>> result = new ArrayList<>();
         for (Key key : item.keySet()) {
             if (keyMatcher == null || keyMatcher.matches(key)) {
-                result.add(MapValueExtractor.<Key, Value>valueOfKey(key));
+                result.add(ValueFromMapExtractor.<Key, Value>valueOfKey(key));
             }
         }
         return result;
@@ -40,11 +40,11 @@ public class MapAllValuesExtractor<Key, Value> implements ValueExtractorsExtract
     }
 
 
-    public static <Key, Value> MapAllValuesExtractor<Key, Value> allMapValues() {
+    public static <Key, Value> ValuesFromMapExtractor<Key, Value> allMapValues() {
         return mapValuesForKeysThatAre(null);
     }
 
-    public static <Key, Value> MapAllValuesExtractor<Key, Value> mapValuesForKeysThatAre(@Nullable Matcher<Key> keyMatcher) {
-        return new MapAllValuesExtractor<>(keyMatcher);
+    public static <Key, Value> ValuesFromMapExtractor<Key, Value> mapValuesForKeysThatAre(@Nullable Matcher<Key> keyMatcher) {
+        return new ValuesFromMapExtractor<>(keyMatcher);
     }
 }

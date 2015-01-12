@@ -13,7 +13,7 @@ import java.util.Map;
 
 import static ch.lambdaj.Lambda.on;
 import static com.github.alkedr.matchers.reporting.ValueExtractingMatcher.*;
-import static com.github.alkedr.matchers.reporting.extractors.map.MapValueExtractor.valueOfKey;
+import static com.github.alkedr.matchers.reporting.extractors.map.ValueFromMapExtractor.valueOfKey;
 import static com.github.alkedr.matchers.reporting.extractors.object.FieldExtractor.field;
 import static com.github.alkedr.matchers.reporting.extractors.object.LambdajArgumentExtractor.resultOf;
 import static org.hamcrest.core.Is.is;

@@ -35,7 +35,7 @@ public class HtmlReporter implements Reporter {
 
     private static String generateNameValue(ExecutedCompositeCheck check) {
         StringBuilder stringBuilder = new StringBuilder("<div class='name-value'>");
-        stringBuilder.append("<span class='name'>").append(check.getExtractedValue().getName()).append("</span>");
+        stringBuilder.append("<span class='name'>").append(escapeHtml4(check.getExtractedValue().getName())).append("</span>");
         if (check.getCompositeChecks().isEmpty()) {
             stringBuilder.append("<span class='value'>").append(escapeHtml4(String.valueOf(check.getExtractedValue().getValue()))).append("</span>");
         }
