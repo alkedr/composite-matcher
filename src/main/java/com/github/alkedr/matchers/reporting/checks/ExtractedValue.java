@@ -10,27 +10,27 @@ import static com.github.alkedr.matchers.reporting.checks.ExtractedValue.Status.
  * Date: 29.12.2014
  */
 public class ExtractedValue {
-    @NotNull private final String name;
+    @Nullable private final String name;
     @Nullable private final Object value;
     @NotNull private final Status status;
     @Nullable private final Throwable throwable;
 
-    public ExtractedValue(@NotNull String name, @Nullable Object value, @NotNull Status status, @Nullable Throwable throwable) {
+    public ExtractedValue(@Nullable String name, @Nullable Object value, @NotNull Status status, @Nullable Throwable throwable) {
         this.name = name;
         this.value = value;
         this.status = status;
         this.throwable = throwable;
     }
 
-    public ExtractedValue(@NotNull String name, @Nullable Object value, @NotNull Status status) {
+    public ExtractedValue(@Nullable String name, @Nullable Object value, @NotNull Status status) {
         this(name, value, status, null);
     }
 
-    public ExtractedValue(@NotNull String name, @Nullable Object value) {
+    public ExtractedValue(@Nullable String name, @Nullable Object value) {
         this(name, value, NORMAL);
     }
 
-    @NotNull
+    @Nullable
     public String getName() {
         return name;
     }
@@ -52,23 +52,24 @@ public class ExtractedValue {
 
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!(obj instanceof ExtractedValue)) return false;
-        ExtractedValue that = (ExtractedValue) obj;
-        if (!name.equals(that.name)) return false;
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (!(object instanceof ExtractedValue)) return false;
+        ExtractedValue that = (ExtractedValue) object;
+        if (name == null ? that.name != null : !name.equals(that.name)) return false;
         if (status != that.status) return false;
-        return value == that.value;
+        if (throwable == null ? that.throwable != null : !throwable.equals(that.throwable)) return false;
+        return value == null ? that.value == null : value.equals(that.value);
     }
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
+        int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (value != null ? value.hashCode() : 0);
         result = 31 * result + status.hashCode();
+        result = 31 * result + (throwable != null ? throwable.hashCode() : 0);
         return result;
     }
-
 
     public enum Status {
         NORMAL,
