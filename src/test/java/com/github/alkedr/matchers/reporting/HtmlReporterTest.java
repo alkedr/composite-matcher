@@ -1,21 +1,22 @@
 package com.github.alkedr.matchers.reporting;
 
+import com.github.alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
 import com.github.alkedr.matchers.reporting.reporters.HtmlReporter;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static ch.lambdaj.Lambda.on;
 import static com.github.alkedr.matchers.reporting.ValueExtractingMatcher.*;
 import static com.github.alkedr.matchers.reporting.extractors.map.ValueFromMapExtractor.valueOfKey;
 import static com.github.alkedr.matchers.reporting.extractors.object.FieldExtractor.field;
 import static com.github.alkedr.matchers.reporting.extractors.object.LambdajArgumentExtractor.resultOf;
+import static java.lang.Runtime.getRuntime;
+import static org.hamcrest.Matchers.any;
 import static org.hamcrest.core.Is.is;
 
 @SuppressWarnings("JUnitTestMethodWithNoAssertions")
@@ -25,6 +26,25 @@ public class HtmlReporterTest {
         try (FileWriter fileWriter = new FileWriter("example-report.html")) {
             fileWriter.write(new HtmlReporter().report(veryComplexBeanMatcher().getReport(new VeryComplexBean())));
         }
+    }
+
+    @Test
+    public void memoryTest() {
+        System.gc();
+        System.out.println((getRuntime().totalMemory() - getRuntime().freeMemory()) / 1024 + " / " + getRuntime().totalMemory() / 1024);
+
+        Collection<String> strings = new ArrayList<>();
+        for (int i = 0; i < 1000000; i++) {
+            strings.add(RandomStringUtils.random(10));
+        }
+
+        System.gc();
+        System.out.println((getRuntime().totalMemory() - getRuntime().freeMemory()) / 1024 + " / " + getRuntime().totalMemory() / 1024);
+
+        ExecutedCompositeCheck report = new ClassifyingMatcher().items(any(String.class), 100000).getReport(strings);
+
+        System.gc();
+        System.out.println((getRuntime().totalMemory() - getRuntime().freeMemory()) / 1024 + " / " + getRuntime().totalMemory() / 1024);
     }
 
 
