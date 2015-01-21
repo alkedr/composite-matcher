@@ -28,10 +28,10 @@ public class PlainTextReporter implements Reporter {
     }
 
     private static String generateStatusNameValueString(ExecutedCompositeCheck check) {
-        return (check.getExtractedValue().getStatus() == ExtractedValue.Status.NORMAL ? "" : check.getExtractedValue().getStatus().toString().toLowerCase() + " ") +
+        return (check.getExtractionStatus() == ExtractedValue.Status.NORMAL ? "" : check.getExtractionStatus().toString().toLowerCase() + " ") +
                 check.getStatus().toString().toLowerCase() + " " +
-                check.getExtractedValue().getName() + ":" +
-                (check.getCompositeChecks().isEmpty() ? " " + check.getExtractedValue().getValue() : "") + "\n";
+                check.getName() + ":" +
+                (check.getCompositeChecks().isEmpty() ? " " + check.getValue() : "") + "\n";
     }
 
     private String generateSimpleChecksReport(ExecutedCompositeCheck check) {

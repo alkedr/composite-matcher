@@ -34,7 +34,7 @@ public class HtmlReporter implements Reporter {
     private static void appendExecutedCompositeCheckReport(ExecutedCompositeCheck check, StringBuilder stringBuilder) {
         stringBuilder
                 .append("<div class='node ")
-                    .append(check.getExtractedValue().getStatus().toString().toLowerCase())
+                    .append(check.getExtractionStatus().toString().toLowerCase())
                     .append(" ")
                     .append(check.getStatus().toString().toLowerCase())
                 .append("'>")
@@ -51,16 +51,16 @@ public class HtmlReporter implements Reporter {
 
     private static void appendNameValue(ExecutedCompositeCheck check, StringBuilder stringBuilder) {
         stringBuilder.append("<div class='name-value'>");
-        if (check.getExtractedValue().getName() != null) {
+        if (check.getName() != null) {
             stringBuilder
                     .append("<span class='name'>")
-                    .append(escapeHtml4(check.getExtractedValue().getName()))
+                    .append(escapeHtml4(check.getName()))
                     .append("</span>");
         }
         if (check.getCompositeChecks().isEmpty()) {
             stringBuilder
                     .append("<span class='value'>")
-                    .append(escapeHtml4(String.valueOf(check.getExtractedValue().getValue())))
+                    .append(escapeHtml4(String.valueOf(check.getValue())))
                     .append("</span>");
         }
         stringBuilder.append("</div>");

@@ -15,7 +15,6 @@ import static com.github.alkedr.matchers.reporting.ValueExtractingMatcher.*;
 import static com.github.alkedr.matchers.reporting.extractors.map.ValueFromMapExtractor.valueOfKey;
 import static com.github.alkedr.matchers.reporting.extractors.object.FieldExtractor.field;
 import static com.github.alkedr.matchers.reporting.extractors.object.LambdajArgumentExtractor.resultOf;
-import static java.lang.Runtime.getRuntime;
 import static org.hamcrest.Matchers.any;
 import static org.hamcrest.core.Is.is;
 
@@ -30,21 +29,15 @@ public class HtmlReporterTest {
 
     @Test
     public void memoryTest() {
-        System.gc();
-        System.out.println((getRuntime().totalMemory() - getRuntime().freeMemory()) / 1024 + " / " + getRuntime().totalMemory() / 1024);
-
+        System.out.println("start");
         Collection<String> strings = new ArrayList<>();
         for (int i = 0; i < 1000000; i++) {
             strings.add(RandomStringUtils.random(10));
         }
-
+        System.out.println("strings are generated");
+        ExecutedCompositeCheck report = new ClassifyingMatcher().items(any(String.class), 1000000).getReport(strings);
+        System.out.println("report is built");
         System.gc();
-        System.out.println((getRuntime().totalMemory() - getRuntime().freeMemory()) / 1024 + " / " + getRuntime().totalMemory() / 1024);
-
-        ExecutedCompositeCheck report = new ClassifyingMatcher().items(any(String.class), 100000).getReport(strings);
-
-        System.gc();
-        System.out.println((getRuntime().totalMemory() - getRuntime().freeMemory()) / 1024 + " / " + getRuntime().totalMemory() / 1024);
     }
 
 

@@ -5,7 +5,6 @@ import org.hamcrest.StringDescription;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * User: alkedr
@@ -13,8 +12,8 @@ import java.util.List;
  */
 public class CheckExecutor<T> {
     @NotNull private final ExtractedValue extractedValue;
-    @NotNull private final List<ExecutedSimpleCheck> simpleChecks = new ArrayList<>();
-    @NotNull private final List<ExecutedCompositeCheck> compositeChecks = new ArrayList<>();
+    @NotNull private final ArrayList<ExecutedSimpleCheck> simpleChecks = new ArrayList<>();
+    @NotNull private final ArrayList<ExecutedCompositeCheck> compositeChecks = new ArrayList<>();
 
 
     public CheckExecutor(@NotNull ExtractedValue extractedValue) {
@@ -46,7 +45,11 @@ public class CheckExecutor<T> {
 
     public ExecutedCompositeCheck buildCompositeCheck() {
         // TODO: объединить проверки с одинаковым именем, переименовать проверки с одинаковым именем и значением
-        return new ExecutedCompositeCheck(extractedValue, calculateStatus(), simpleChecks, compositeChecks);
+        simpleChecks.trimToSize();
+        compositeChecks.trimToSize();
+        return new ExecutedCompositeCheck(extractedValue, calculateStatus(),
+                simpleChecks.isEmpty() ? null : simpleChecks,
+                compositeChecks.isEmpty() ? null : compositeChecks);
     }
 
     private ExecutedCheck.Status calculateStatus() {
@@ -68,7 +71,7 @@ public class CheckExecutor<T> {
         INNER_CHECK_RESULT.remove();
         boolean matcherResult = matcher.matches(extractedValue.getValue());
         if (matcherResultThatGoesToReport == null || matcherResultThatGoesToReport == matcherResult) {
-            if (INNER_CHECK_RESULT.get() != null && INNER_CHECK_RESULT.get().getExtractedValue().getValue() == extractedValue.getValue()) {
+            if (INNER_CHECK_RESULT.get() != null && INNER_CHECK_RESULT.get().getValue() == extractedValue.getValue()) {
                 addDataFrom(INNER_CHECK_RESULT.get());
             } else {
                 simpleChecks.add(new ExecutedSimpleCheck(StringDescription.toString(matcher),

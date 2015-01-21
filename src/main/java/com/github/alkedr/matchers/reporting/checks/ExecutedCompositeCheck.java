@@ -1,7 +1,9 @@
 package com.github.alkedr.matchers.reporting.checks;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Collections.unmodifiableList;
@@ -10,16 +12,23 @@ import static java.util.Collections.unmodifiableList;
  * Хранит информацию о запуске {@link com.github.alkedr.matchers.reporting.ReportingMatcher}'а
  */
 public class ExecutedCompositeCheck implements ExecutedCheck {
-    @NotNull private final ExtractedValue extractedValue;
-    private final Status status;
-    @NotNull private final List<ExecutedSimpleCheck> simpleChecks;
-    @NotNull private final List<ExecutedCompositeCheck> compositeChecks;
+    @Nullable private final String name;
+    @Nullable private final Object value;
+    @NotNull private final ExtractedValue.Status extractionStatus;
+    @Nullable private final Throwable extractionException;  // TODO: embed in status?
+
+    @NotNull private final Status status;
+    @Nullable private final List<ExecutedSimpleCheck> simpleChecks;
+    @Nullable private final List<ExecutedCompositeCheck> compositeChecks;
 
 
-    public ExecutedCompositeCheck(@NotNull ExtractedValue extractedValue, Status status,
-                                  @NotNull List<ExecutedSimpleCheck> simpleChecks,
-                                  @NotNull List<ExecutedCompositeCheck> compositeChecks) {
-        this.extractedValue = extractedValue;
+    public ExecutedCompositeCheck(@NotNull ExtractedValue extractedValue, @NotNull Status status,
+                                  @Nullable List<ExecutedSimpleCheck> simpleChecks,
+                                  @Nullable List<ExecutedCompositeCheck> compositeChecks) {
+        name = extractedValue.getName();
+        value = extractedValue.getValue();
+        extractionStatus = extractedValue.getStatus();
+        extractionException = extractedValue.getThrowable();
         this.status = status;
         this.simpleChecks = simpleChecks;
         this.compositeChecks = compositeChecks;
@@ -27,16 +36,29 @@ public class ExecutedCompositeCheck implements ExecutedCheck {
 
 
     @Override
+    @NotNull
     public Status getStatus() {
         return status;
     }
 
-    /**
-     * @return проверяемое значение
-     */
+    @Nullable
+    public String getName() {
+        return name;
+    }
+
+    @Nullable
+    public Object getValue() {
+        return value;
+    }
+
     @NotNull
-    public ExtractedValue getExtractedValue() {
-        return extractedValue;
+    public ExtractedValue.Status getExtractionStatus() {
+        return extractionStatus;
+    }
+
+    @Nullable
+    public Throwable getExtractionException() {
+        return extractionException;
     }
 
     /**
@@ -44,7 +66,7 @@ public class ExecutedCompositeCheck implements ExecutedCheck {
      */
     @NotNull
     public List<ExecutedSimpleCheck> getSimpleChecks() {
-        return unmodifiableList(simpleChecks);
+        return simpleChecks == null ? new ArrayList<ExecutedSimpleCheck>() : unmodifiableList(simpleChecks);
     }
 
     /**
@@ -53,6 +75,6 @@ public class ExecutedCompositeCheck implements ExecutedCheck {
      */
     @NotNull
     public List<ExecutedCompositeCheck> getCompositeChecks() {
-        return unmodifiableList(compositeChecks);
+        return compositeChecks == null ? new ArrayList<ExecutedCompositeCheck>() : unmodifiableList(compositeChecks);
     }
 }
