@@ -3,10 +3,8 @@ package com.github.alkedr.matchers.reporting.checks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
-import static java.util.Collections.unmodifiableList;
 
 /**
  * Хранит информацию о запуске {@link com.github.alkedr.matchers.reporting.ReportingMatcher}'а
@@ -15,7 +13,7 @@ public class ExecutedCompositeCheck implements ExecutedCheck {
     @Nullable private final String name;
     @Nullable private final Object value;
     @NotNull private final ExtractedValue.Status extractionStatus;
-    @Nullable private final Throwable extractionException;  // TODO: embed in status?
+    @Nullable private final Exception extractionException;  // TODO: embed in status?
 
     @NotNull private final Status status;
     @Nullable private final List<ExecutedSimpleCheck> simpleChecks;
@@ -25,10 +23,10 @@ public class ExecutedCompositeCheck implements ExecutedCheck {
     public ExecutedCompositeCheck(@NotNull ExtractedValue extractedValue, @NotNull Status status,
                                   @Nullable List<ExecutedSimpleCheck> simpleChecks,
                                   @Nullable List<ExecutedCompositeCheck> compositeChecks) {
-        name = extractedValue.getName();
-        value = extractedValue.getValue();
-        extractionStatus = extractedValue.getStatus();
-        extractionException = extractedValue.getThrowable();
+        this.name = extractedValue.getName();
+        this.value = extractedValue.getValue();
+        this.extractionStatus = extractedValue.getStatus();
+        this.extractionException = extractedValue.getException();
         this.status = status;
         this.simpleChecks = simpleChecks;
         this.compositeChecks = compositeChecks;
@@ -57,7 +55,7 @@ public class ExecutedCompositeCheck implements ExecutedCheck {
     }
 
     @Nullable
-    public Throwable getExtractionException() {
+    public Exception getExtractionException() {
         return extractionException;
     }
 
@@ -66,7 +64,7 @@ public class ExecutedCompositeCheck implements ExecutedCheck {
      */
     @NotNull
     public List<ExecutedSimpleCheck> getSimpleChecks() {
-        return simpleChecks == null ? new ArrayList<ExecutedSimpleCheck>() : unmodifiableList(simpleChecks);
+        return simpleChecks == null ? Collections.<ExecutedSimpleCheck>emptyList() : simpleChecks;
     }
 
     /**
@@ -75,6 +73,6 @@ public class ExecutedCompositeCheck implements ExecutedCheck {
      */
     @NotNull
     public List<ExecutedCompositeCheck> getCompositeChecks() {
-        return compositeChecks == null ? new ArrayList<ExecutedCompositeCheck>() : unmodifiableList(compositeChecks);
+        return compositeChecks == null ? Collections.<ExecutedCompositeCheck>emptyList() : compositeChecks;
     }
 }

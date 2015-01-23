@@ -2,6 +2,7 @@ package com.github.alkedr.matchers.reporting;
 
 import com.github.alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
 import com.github.alkedr.matchers.reporting.reporters.HtmlReporter;
+import com.github.alkedr.matchers.reporting.reporters.HtmlWithJsonReporter;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matcher;
 import org.junit.Test;
@@ -28,16 +29,22 @@ public class HtmlReporterTest {
     }
 
     @Test
-    public void memoryTest() {
+    public void memoryTest() throws IOException {
         System.out.println("start");
         Collection<String> strings = new ArrayList<>();
-        for (int i = 0; i < 1000000; i++) {
-            strings.add(RandomStringUtils.random(10));
+        for (int i = 0; i < 1000; i++) {
+            strings.add(RandomStringUtils.randomAlphanumeric(10));
         }
         System.out.println("strings are generated");
-        ExecutedCompositeCheck report = new ClassifyingMatcher().items(any(String.class), 1000000).getReport(strings);
+        ExecutedCompositeCheck report = new ClassifyingMatcher().items(any(String.class), 1000).getReport(strings);
         System.out.println("report is built");
+        String s = new HtmlWithJsonReporter().report(report);
+        System.out.println("html size " + s.length());
         System.gc();
+
+        try (FileWriter fileWriter = new FileWriter("example-report.html")) {
+            fileWriter.write(new HtmlWithJsonReporter().report(report));
+        }
     }
 
 

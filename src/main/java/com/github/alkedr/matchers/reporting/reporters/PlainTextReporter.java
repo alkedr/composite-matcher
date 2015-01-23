@@ -7,7 +7,7 @@ import com.github.alkedr.matchers.reporting.checks.ExtractedValue;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.Nullable;
 
-// TODO: report getExtractedValue().getThrowable()
+// TODO: report getExtractedValue().getException()
 public class PlainTextReporter implements Reporter {
     @Nullable private Matcher<ExecutedCheck> checkMatcher = null;
 

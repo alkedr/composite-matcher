@@ -26,8 +26,8 @@ public class MethodExtractor<FromType, ReturnValueType> implements ValueExtracto
         try {
             if (item == null) return new ExtractedValue(nameForReport, null, ExtractedValue.Status.MISSING);
             return new ExtractedValue(nameForReport, method.invoke(item));
-        } catch (Throwable throwable) {
-            return new ExtractedValue(nameForReport, null, ExtractedValue.Status.ERROR, throwable);
+        } catch (Exception exception) {
+            return new ExtractedValue(nameForReport, null, ExtractedValue.Status.ERROR, exception);
         }
     }
 

@@ -29,8 +29,8 @@ public class FieldExtractor<FromType, FieldType> implements ValueExtractor<FromT
             field.setAccessible(true);
             if (item == null) return new ExtractedValue(nameForReport, null, ExtractedValue.Status.MISSING);
             return new ExtractedValue(nameForReport, field.get(item));
-        } catch (Throwable throwable) {
-            return new ExtractedValue(nameForReport, null, ExtractedValue.Status.ERROR, throwable);
+        } catch (Exception exception) {
+            return new ExtractedValue(nameForReport, null, ExtractedValue.Status.ERROR, exception);
         }
     }
 

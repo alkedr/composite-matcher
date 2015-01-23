@@ -1,1 +1,1 @@
-var data = $$DATA$$;
+s

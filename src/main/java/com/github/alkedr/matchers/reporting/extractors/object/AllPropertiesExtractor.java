@@ -27,11 +27,11 @@ public class AllPropertiesExtractor<FromType> implements ValueExtractorsExtracto
             for (PropertyDescriptor pd : getBeanInfo(tClass).getPropertyDescriptors()) {
                 result.add(new MethodExtractor<FromType, Object>(pd.getName(), pd.getReadMethod()));
             }
-        } catch (final Throwable throwable) {
+        } catch (final Exception exception) {
             result.add(new ValueExtractor<FromType, Object>() {
                 @Override
                 public ExtractedValue extractValue(@Nullable FromType item) {
-                    return new ExtractedValue("!<properties of " + tClass.getName() + ">!", null, ExtractedValue.Status.ERROR, throwable);
+                    return new ExtractedValue("!<properties of " + tClass.getName() + ">!", null, ExtractedValue.Status.ERROR, exception);
                 }
             });
         }

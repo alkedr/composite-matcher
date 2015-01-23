@@ -13,13 +13,13 @@ public class ExtractedValue {
     @Nullable private final String name;
     @Nullable private final Object value;
     @NotNull private final Status status;
-    @Nullable private final Throwable throwable;
+    @Nullable private final Exception exception;
 
-    public ExtractedValue(@Nullable String name, @Nullable Object value, @NotNull Status status, @Nullable Throwable throwable) {
+    public ExtractedValue(@Nullable String name, @Nullable Object value, @NotNull Status status, @Nullable Exception exception) {
         this.name = name;
         this.value = value;
         this.status = status;
-        this.throwable = throwable;
+        this.exception = exception;
     }
 
     public ExtractedValue(@Nullable String name, @Nullable Object value, @NotNull Status status) {
@@ -46,8 +46,8 @@ public class ExtractedValue {
     }
 
     @Nullable
-    public Throwable getThrowable() {
-        return throwable;
+    public Exception getException() {
+        return exception;
     }
 
 
@@ -58,7 +58,7 @@ public class ExtractedValue {
         ExtractedValue that = (ExtractedValue) object;
         if (name == null ? that.name != null : !name.equals(that.name)) return false;
         if (status != that.status) return false;
-        if (throwable == null ? that.throwable != null : !throwable.equals(that.throwable)) return false;
+        if (exception == null ? that.exception != null : !exception.equals(that.exception)) return false;
         return value == null ? that.value == null : value.equals(that.value);
     }
 
@@ -67,7 +67,7 @@ public class ExtractedValue {
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (value != null ? value.hashCode() : 0);
         result = 31 * result + status.hashCode();
-        result = 31 * result + (throwable != null ? throwable.hashCode() : 0);
+        result = 31 * result + (exception != null ? exception.hashCode() : 0);
         return result;
     }
 

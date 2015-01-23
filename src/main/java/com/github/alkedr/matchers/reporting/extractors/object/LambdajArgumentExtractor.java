@@ -23,8 +23,8 @@ public class LambdajArgumentExtractor<FromType, ReturnValueType> implements Valu
         try {
             if (item == null) return new ExtractedValue(nameForReport, null, ExtractedValue.Status.MISSING);
             return new ExtractedValue(nameForReport, argument.evaluate(item));
-        } catch (Throwable throwable) {
-            return new ExtractedValue(nameForReport, null, ExtractedValue.Status.ERROR, throwable);
+        } catch (Exception exception) {
+            return new ExtractedValue(nameForReport, null, ExtractedValue.Status.ERROR, exception);
         }
     }
 
