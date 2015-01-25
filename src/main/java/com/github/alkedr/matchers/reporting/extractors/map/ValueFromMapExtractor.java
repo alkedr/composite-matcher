@@ -7,7 +7,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.Map;
 
-public class ValueFromMapExtractor<Key, Value> implements ValueExtractor<Map<Key, ? super Value>, Value> {
+public class ValueFromMapExtractor<Key> implements ValueExtractor<Map<Key, Object>, Object> {
     private final String name;
     private final Key key;
 
@@ -17,7 +17,7 @@ public class ValueFromMapExtractor<Key, Value> implements ValueExtractor<Map<Key
     }
 
     @Override
-    public ExtractedValue extractValue(Map<Key, ? super Value> item) {
+    public ExtractedValue extractValue(Map<Key, Object> item) {
         return item.containsKey(key)
                 ? new ExtractedValue(name, item.get(key))
                 : new ExtractedValue(name, null, ExtractedValue.Status.MISSING);
@@ -34,20 +34,11 @@ public class ValueFromMapExtractor<Key, Value> implements ValueExtractor<Map<Key
     }
 
 
-    public static <Key, Value> ValueFromMapExtractor<Key, Value> valueOfKey(Key key) {
+    public static <Key> ValueFromMapExtractor<Key> valueOfKey(Key key) {
         return new ValueFromMapExtractor<>(String.valueOf(key), key);
     }
 
-    public static <Key, Value> ValueFromMapExtractor<Key, Value> valueOfKey(String name, Key key) {
-        return new ValueFromMapExtractor<>(name, key);
-    }
-
-
-    public static <Key, Value> ValueFromMapExtractor<Key, Value> valueOfKey(Key key, Class<Value> valueClass) {
-        return new ValueFromMapExtractor<>(String.valueOf(key), key);
-    }
-
-    public static <Key, Value> ValueFromMapExtractor<Key, Value> valueOfKey(String name, Key key, Class<Value> valueClass) {
+    public static <Key> ValueFromMapExtractor<Key> valueOfKey(String name, Key key) {
         return new ValueFromMapExtractor<>(name, key);
     }
 }

@@ -1,19 +1,17 @@
-package com.github.alkedr.matchers.reporting;
+package com.github.alkedr.matchers.reporting.impl;
 
-import com.github.alkedr.matchers.reporting.checks.CheckExecutor;
-import com.github.alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
 import com.github.alkedr.matchers.reporting.checks.ExtractedValue;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.StringDescription.asString;
 
 // добавить возможность настройки отображения элементов (номер, item.toString, и т. п.)
-public class ClassifyingMatcher<T> extends ReportingMatcher<Iterable<T>> {
+public class ClassifyingMatcher<T> extends ReportingMatcherImpl<Iterable<T>> {
     private final List<PlannedCheck<T>> plannedChecks = new ArrayList<>();
 
 
@@ -44,8 +42,8 @@ public class ClassifyingMatcher<T> extends ReportingMatcher<Iterable<T>> {
 
 
     @Override
-    public ExecutedCompositeCheck getReportSafely(@Nullable Iterable<T> iterable) {
-        List<CheckInProgress<T>> checksInProgress = new ArrayList<>();
+    public ExecutedCompositeCheckImpl getReportSafely(@Nullable Iterable<T> iterable) {
+        Collection<CheckInProgress<T>> checksInProgress = new ArrayList<>();
         for (PlannedCheck<T> plannedCheck : plannedChecks) {
             checksInProgress.add(new CheckInProgress<>(plannedCheck));
         }
@@ -60,7 +58,7 @@ public class ClassifyingMatcher<T> extends ReportingMatcher<Iterable<T>> {
                 }
             }
         }
-
+/*
         CheckExecutor<T> executor = new CheckExecutor<>(new ExtractedValue("", iterable));
         for (CheckInProgress<T> checkInProgress : checksInProgress) {
             CheckExecutor<T> executorForGroup = new CheckExecutor<>(new ExtractedValue(asString(checkInProgress.valueMatcher), null));
@@ -72,7 +70,7 @@ public class ClassifyingMatcher<T> extends ReportingMatcher<Iterable<T>> {
             }
             executor.addCompositeCheck(executorForGroup.buildCompositeCheck());
         }
-        return executor.buildCompositeCheck();
+        return executor.buildCompositeCheck();*/
     }
 
 

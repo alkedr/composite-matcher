@@ -1,6 +1,7 @@
 package com.github.alkedr.matchers.reporting;
 
-import com.github.alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
+import com.github.alkedr.matchers.reporting.impl.ClassifyingMatcher;
+import com.github.alkedr.matchers.reporting.impl.ReportingMatcherImpl;
 import com.github.alkedr.matchers.reporting.reporters.HtmlReporter;
 import com.github.alkedr.matchers.reporting.reporters.HtmlWithJsonReporter;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -12,7 +13,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static ch.lambdaj.Lambda.on;
-import static com.github.alkedr.matchers.reporting.ValueExtractingMatcher.*;
+import static com.github.alkedr.matchers.reporting.ValueExtractingMatcherForImplementing.ExecutedCompositeCheck;
 import static com.github.alkedr.matchers.reporting.extractors.map.ValueFromMapExtractor.valueOfKey;
 import static com.github.alkedr.matchers.reporting.extractors.object.FieldExtractor.field;
 import static com.github.alkedr.matchers.reporting.extractors.object.LambdajArgumentExtractor.resultOf;
@@ -54,8 +55,8 @@ public class HtmlReporterTest {
 
 
 
-    private static ReportingMatcher<VeryComplexBean> veryComplexBeanMatcher() {
-        map(Integer.class, Object.class)
+    private static ReportingMatcherImpl<VeryComplexBean> veryComplexBeanMatcher() {
+        map(Integer.class, String.class)
                 .checkThat(valueOfKey(1), is(1))
                 .checkThat(valueOfKey(1), is(""))
                 ;

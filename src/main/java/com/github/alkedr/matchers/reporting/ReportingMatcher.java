@@ -1,71 +1,61 @@
 package com.github.alkedr.matchers.reporting;
 
-import com.github.alkedr.matchers.reporting.checks.CheckExecutor;
-import com.github.alkedr.matchers.reporting.checks.ExecutedCheck;
-import com.github.alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
-import com.github.alkedr.matchers.reporting.checks.ExtractedValue;
-import com.github.alkedr.matchers.reporting.reporters.PlainTextReporter;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import java.util.List;
 
-import static org.hamcrest.Matchers.isA;
-
-/**
- * Override getReportSafely unless you need to handle instances of several different classes or nulls.
- */
-public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
-    @NotNull private final Class<? super T> tClass;
-    private Object lastItem = null;
-    private ExecutedCompositeCheck lastReport = null;
-
-    protected ReportingMatcher() {
-        this(Object.class);
-    }
-
-    protected ReportingMatcher(@NotNull Class<? super T> tClass) {
-        this.tClass = tClass;
-    }
+public interface ReportingMatcher<T> extends Matcher<T> {
+    ExecutedCompositeCheck getReport(@Nullable Object item);
 
 
-    public Class<? super T> getActualItemClass() {
-        return tClass;
-    }
+    interface ExecutedCheck {
+        @NotNull Status getStatus();
 
-
-    @Override
-    public boolean matches(Object item) {
-        lastItem = item;
-        lastReport = getReport(item);
-        CheckExecutor.INNER_CHECK_RESULT.set(lastReport);
-        return lastReport.getStatus() != ExecutedCheck.Status.FAILED;
-    }
-
-    @Override
-    public void describeTo(Description description) {
-        description.appendText("is correct");
-    }
-
-    @Override
-    public void describeMismatch(Object item, Description description) {
-        if (!Objects.equals(lastItem, item)) matches(item);
-        description.appendText(new PlainTextReporter().report(lastReport));
-    }
-
-
-    public ExecutedCompositeCheck getReport(@Nullable Object item) {
-        if (tClass.isInstance(item)) {
-            return getReportSafely((T) item);
-        } else {
-            CheckExecutor<T> executor = new CheckExecutor<>(new ExtractedValue("", item));
-            executor.checkThat(isA(tClass));
-            executor.addDataFrom(getReportSafely(null));
-            return executor.buildCompositeCheck();
+        enum Status {
+            UNCHECKED,
+            PASSED,
+            FAILED,
+            ;
         }
     }
 
-    public abstract ExecutedCompositeCheck getReportSafely(@Nullable T item);
+    /**
+     * Хранит информацию о запуске обычного Matcher'а
+     */
+    interface ExecutedSimpleCheck extends ExecutedCheck {
+        @NotNull String getMatcherDescription();
+        @Nullable String getMismatchDescription();
+    }
+
+    /**
+     * Хранит информацию о запуске {@link ReportingMatcher}'а
+     */
+    interface ExecutedCompositeCheck extends ExecutedCheck {
+        @Nullable String getName();
+        @Nullable Object getValue();
+        @NotNull ExtractionStatus getExtractionStatus();
+        @Nullable Exception getExtractionException();
+
+        /**
+         * @return результаты запуска матчеров на проверяемом значении
+         */
+        @NotNull List<ExecutedSimpleCheck> getSimpleChecks();
+
+        /**
+         * @return результаты запуска матчеров на значениях, которые были извлечены из проверяемого, например,
+         * если проверяемое значение объект, то это могут быть поля объекта, если массив, то элементы, и т. д.
+         */
+        @NotNull List<ExecutedCompositeCheck> getCompositeChecks();
+    }
+
+
+    enum ExtractionStatus {
+        NORMAL,
+        MISSING,
+        UNEXPECTED,
+        ERROR,
+        ;
+    }
 }

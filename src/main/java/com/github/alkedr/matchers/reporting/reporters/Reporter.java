@@ -1,7 +1,7 @@
 package com.github.alkedr.matchers.reporting.reporters;
 
-import com.github.alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
+import com.github.alkedr.matchers.reporting.ReportingMatcher;
 
 public interface Reporter {
-    String report(ExecutedCompositeCheck check);
+    String report(ReportingMatcher.ExecutedCompositeCheck check);
 }
