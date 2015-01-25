@@ -1,4 +1,4 @@
 package com.github.alkedr.matchers.reporting;
 
-public interface ObjectMatcher<T> extends ObjectMatcherForImplementing<T, ObjectMatcher<T>> {
+public class ObjectMatcher<T> extends ObjectMatcherForExtending<T, ObjectMatcher<T>> {
 }

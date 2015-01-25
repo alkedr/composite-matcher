@@ -1,15 +1,13 @@
-package com.github.alkedr.matchers.reporting.impl;
+package com.github.alkedr.matchers.reporting;
 
-import com.github.alkedr.matchers.reporting.PlanningMatcherForImplementing;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PlanningMatcherImpl<T, U extends PlanningMatcherImpl<T, U>> extends ReportingMatcherImpl<T> implements PlanningMatcherForImplementing<T, U> {
+public class PlanningMatcherForExtending<T, U extends PlanningMatcherForExtending<T, U>> extends ReportingMatcher<T> {
     private final Collection<PlannedCheck<T>> plannedChecks = new ArrayList<>();
 
-    @Override
     public U addPlannedCheck(PlannedCheck<T> plannedCheck) {
         plannedChecks.add(plannedCheck);
         return (U) this;
@@ -20,5 +18,9 @@ public class PlanningMatcherImpl<T, U extends PlanningMatcherImpl<T, U>> extends
         for (PlannedCheck<T> plannedCheck : plannedChecks) {
             plannedCheck.execute(item, checker);
         }
+    }
+
+    public interface PlannedCheck<T> {
+        void execute(T item, ExecutedCompositeCheckBuilder checker);
     }
 }

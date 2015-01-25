@@ -1,4 +1,4 @@
 package com.github.alkedr.matchers.reporting;
 
-public interface ValueExtractingMatcher<T> extends ValueExtractingMatcherForImplementing<T, ValueExtractingMatcher<T>> {
+public class ValueExtractingMatcher<T> extends ValueExtractingMatcherForExtending<T, ValueExtractingMatcher<T>> {
 }
