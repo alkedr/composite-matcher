@@ -1,12 +1,11 @@
 package com.github.alkedr.matchers.reporting.reporters;
 
-import com.github.alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
-import com.github.alkedr.matchers.reporting.checks.ExecutedSimpleCheck;
+import com.github.alkedr.matchers.reporting.ReportingMatcher;
 
 import java.io.StringWriter;
 import java.util.Scanner;
 
-import static com.github.alkedr.matchers.reporting.checks.ExtractedValue.Status.NORMAL;
+import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExtractionStatus.NORMAL;
 
 /**
  * User: alkedr
@@ -14,7 +13,7 @@ import static com.github.alkedr.matchers.reporting.checks.ExtractedValue.Status.
  */
 public class HtmlWithJsonReporter implements Reporter {
     @Override
-    public String report(ExecutedCompositeCheck check) {
+    public String report(ReportingMatcher.ExecutedCompositeCheck check) {
         StringWriter w = new StringWriter();
         w.write("<!DOCTYPE html>");
         w.write("<html>");
@@ -34,7 +33,7 @@ public class HtmlWithJsonReporter implements Reporter {
         return w.toString();
     }
 
-    private static void writeCompositeCheck(ExecutedCompositeCheck check, StringWriter w) {
+    private static void writeCompositeCheck(ReportingMatcher.ExecutedCompositeCheck check, StringWriter w) {
         w.write("{s:");
         w.write(String.valueOf(check.getStatus().ordinal()));
         if (check.getName() != null && !check.getName().isEmpty()) {
@@ -56,7 +55,7 @@ public class HtmlWithJsonReporter implements Reporter {
         if (!check.getSimpleChecks().isEmpty()) {
             w.write(",sc:[");
             boolean first = true;
-            for (ExecutedSimpleCheck simpleCheck : check.getSimpleChecks()) {
+            for (ReportingMatcher.ExecutedSimpleCheck simpleCheck : check.getSimpleChecks()) {
                 if (!first) w.write(',');
                 first = false;
                 w.write("{d:");
@@ -70,7 +69,7 @@ public class HtmlWithJsonReporter implements Reporter {
         if (!check.getCompositeChecks().isEmpty()) {
             w.write(",cc:[");
             boolean first = true;
-            for (ExecutedCompositeCheck compositeCheck : check.getCompositeChecks()) {
+            for (ReportingMatcher.ExecutedCompositeCheck compositeCheck : check.getCompositeChecks()) {
                 if (!first) w.write(',');
                 first = false;
                 writeCompositeCheck(compositeCheck, w);

@@ -1,8 +1,6 @@
 package com.github.alkedr.matchers.reporting.reporters;
 
-import com.github.alkedr.matchers.reporting.checks.ExecutedCheck;
-import com.github.alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
-import com.github.alkedr.matchers.reporting.checks.ExecutedSimpleCheck;
+import com.github.alkedr.matchers.reporting.ReportingMatcher;
 
 import java.util.Scanner;
 
@@ -11,7 +9,7 @@ import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
 // TODO: report getExtractedValue().getException()
 public class HtmlReporter implements Reporter {
     @Override
-    public String report(ExecutedCompositeCheck check) {
+    public String report(ReportingMatcher.ExecutedCompositeCheck check) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder
                 .append("<!DOCTYPE html>")
@@ -31,7 +29,7 @@ public class HtmlReporter implements Reporter {
         return stringBuilder.toString();
     }
 
-    private static void appendExecutedCompositeCheckReport(ExecutedCompositeCheck check, StringBuilder stringBuilder) {
+    private static void appendExecutedCompositeCheckReport(ReportingMatcher.ExecutedCompositeCheck check, StringBuilder stringBuilder) {
         stringBuilder
                 .append("<div class='node ")
                     .append(check.getExtractionStatus().toString().toLowerCase())
@@ -49,7 +47,7 @@ public class HtmlReporter implements Reporter {
         stringBuilder.append("</div>");
     }
 
-    private static void appendNameValue(ExecutedCompositeCheck check, StringBuilder stringBuilder) {
+    private static void appendNameValue(ReportingMatcher.ExecutedCompositeCheck check, StringBuilder stringBuilder) {
         stringBuilder.append("<div class='name-value'>");
         if (check.getName() != null) {
             stringBuilder
@@ -66,11 +64,11 @@ public class HtmlReporter implements Reporter {
         stringBuilder.append("</div>");
     }
 
-    private static void appendMatchersTable(ExecutedCompositeCheck check, StringBuilder stringBuilder) {
+    private static void appendMatchersTable(ReportingMatcher.ExecutedCompositeCheck check, StringBuilder stringBuilder) {
         if (check.getSimpleChecks().isEmpty()) return;
         stringBuilder.append("<table class='matchers' style='border-spacing: 0px;'>");
-        for (ExecutedSimpleCheck simpleCheck : check.getSimpleChecks()) {
-            if (simpleCheck.getStatus() == ExecutedCheck.Status.FAILED) {
+        for (ReportingMatcher.ExecutedSimpleCheck simpleCheck : check.getSimpleChecks()) {
+            if (simpleCheck.getStatus() == ReportingMatcher.ExecutedCheck.Status.FAILED) {
                 stringBuilder
                         .append("<tr class='matcher failed'><td class='image'>×</td><td class='description'>")
                         .append(escapeHtml4(simpleCheck.getMatcherDescription()))
@@ -88,10 +86,10 @@ public class HtmlReporter implements Reporter {
         stringBuilder.append("</table>");
     }
 
-    private static void appendInnerNodesDiv(ExecutedCompositeCheck check, StringBuilder stringBuilder) {
+    private static void appendInnerNodesDiv(ReportingMatcher.ExecutedCompositeCheck check, StringBuilder stringBuilder) {
         if (check.getCompositeChecks().isEmpty()) return;
         stringBuilder.append("<div class='inner-nodes'>");
-        for (ExecutedCompositeCheck innerCheck : check.getCompositeChecks()) {
+        for (ReportingMatcher.ExecutedCompositeCheck innerCheck : check.getCompositeChecks()) {
             appendExecutedCompositeCheckReport(innerCheck, stringBuilder);
         }
         stringBuilder.append("</div>");

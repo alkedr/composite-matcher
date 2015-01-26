@@ -1,5 +1,6 @@
 package com.github.alkedr.matchers.reporting;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -16,11 +17,11 @@ public class PlanningMatcherForExtending<T, U extends PlanningMatcherForExtendin
     @Override
     public void runChecks(@Nullable T item, ExecutedCompositeCheckBuilder checker) {
         for (PlannedCheck<T> plannedCheck : plannedChecks) {
-            plannedCheck.execute(item, checker);
+            plannedCheck.execute(item == null ? getActualItemClass() : item.getClass(), item, checker);
         }
     }
 
     public interface PlannedCheck<T> {
-        void execute(T item, ExecutedCompositeCheckBuilder checker);
+        void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker);
     }
 }

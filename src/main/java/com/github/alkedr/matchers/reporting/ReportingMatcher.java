@@ -8,12 +8,14 @@ import org.hamcrest.StringDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedCheck.Status.*;
+import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExtractionStatus.NORMAL;
 import static org.hamcrest.Matchers.isA;
 
 /**
@@ -24,7 +26,7 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
     private ExecutedCompositeCheck lastReport = null;
 
     protected ReportingMatcher() {
-        this(Object.class);
+        this.tClass = (Class<? super T>) findClassOfT(getClass());
     }
 
     protected ReportingMatcher(@NotNull Class<? super T> tClass) {
@@ -57,7 +59,7 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
 
     public ExecutedCompositeCheck getReport(@Nullable Object item) {
         ExecutedCompositeCheckBuilder checkBuilder = CHECK_BUILDER_OF_OUTER_REPORTING_MATCHER.get();
-        if (checkBuilder == null) checkBuilder = new ExecutedCompositeCheckImpl(null, item, ExtractionStatus.NORMAL, null);
+        if (checkBuilder == null) checkBuilder = new ExecutedCompositeCheckImpl(null, item, NORMAL, null);
         if (tClass.isInstance(item)) {
             runChecks((T) item, checkBuilder);
         } else {
@@ -77,7 +79,6 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
             UNCHECKED,
             PASSED,
             FAILED,
-            ;
         }
     }
 
@@ -101,17 +102,19 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         /**
          * @return результаты запуска матчеров на проверяемом значении
          */
-        @NotNull List<ExecutedSimpleCheck> getSimpleChecks();
+        @NotNull
+        List<? extends ExecutedSimpleCheck> getSimpleChecks();
 
         /**
          * @return результаты запуска матчеров на значениях, которые были извлечены из проверяемого, например,
          * если проверяемое значение объект, то это могут быть поля объекта, если массив, то элементы, и т. д.
          */
-        @NotNull List<ExecutedCompositeCheck> getCompositeChecks();
+        @NotNull
+        List<? extends ExecutedCompositeCheck> getCompositeChecks();
     }
 
 
-    public enum ExtractionStatus {
+    public enum ExtractionStatus {  // TODO: оставить только NORMAL и ERROR?
         NORMAL,
         MISSING,
         UNEXPECTED,
@@ -122,9 +125,8 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
     public interface ExecutedCompositeCheckBuilder extends ExecutedCompositeCheck {
         boolean runMatcher(Matcher<?> matcher);
         void runMatchers(Collection<? extends Matcher<?>> matchers);
-        void addDataFrom(ExecutedCompositeCheck check);
-        void addSimpleCheck(ExecutedSimpleCheck simpleCheck);
-        void addCompositeCheck(ExecutedCompositeCheck compositeCheck);
+        void runMatchers(Matcher<?>... matchers);
+        ExecutedCompositeCheckBuilder createCompositeCheck(String name, Object value, ExtractionStatus extractionStatus, Exception exception);
     }
 
 
@@ -164,8 +166,8 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         @NotNull private final ExtractionStatus extractionStatus;
         @Nullable private final Exception extractionException;  // TODO: embed in status?
         @NotNull private Status status = UNCHECKED;
-        @Nullable private List<ExecutedSimpleCheck> simpleChecks = null;
-        @Nullable private List<ExecutedCompositeCheck> compositeChecks = null;
+        @Nullable private List<ExecutedSimpleCheckImpl> simpleChecks = null;
+        @Nullable private List<ExecutedCompositeCheckImpl> compositeChecks = null;
 
         private ExecutedCompositeCheckImpl(@Nullable String name, @Nullable Object value,
                                            @NotNull ExtractionStatus extractionStatus,
@@ -208,13 +210,13 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
 
         @Override
         @NotNull
-        public List<ExecutedSimpleCheck> getSimpleChecks() {
+        public List<? extends ExecutedSimpleCheck> getSimpleChecks() {
             return simpleChecks == null ? Collections.<ExecutedSimpleCheck>emptyList() : simpleChecks;
         }
 
         @Override
         @NotNull
-        public List<ExecutedCompositeCheck> getCompositeChecks() {
+        public List<? extends ExecutedCompositeCheck> getCompositeChecks() {
             return compositeChecks == null ? Collections.<ExecutedCompositeCheck>emptyList() : compositeChecks;
         }
 
@@ -227,39 +229,32 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         }
 
         @Override
+        public void runMatchers(Matcher<?>... matchers) {
+            for (Matcher<?> matcher : matchers) {
+                runMatcher(matcher);
+            }
+        }
+
+        @Override
+        public ExecutedCompositeCheckBuilder createCompositeCheck(String name, Object value, ExtractionStatus extractionStatus, Exception exception) {
+            if (compositeChecks == null) compositeChecks = new ArrayList<>();
+            ExecutedCompositeCheckImpl result = new ExecutedCompositeCheckImpl(name, value, NORMAL, null);
+            compositeChecks.add(result);
+            return result;
+        }
+
+        @Override
         public boolean runMatcher(Matcher<?> matcher) {
             REPORTING_MATCHER_FLAG.remove();
             CHECK_BUILDER_OF_OUTER_REPORTING_MATCHER.set(this);
             boolean matcherResult = matcher.matches(value);
             if (REPORTING_MATCHER_FLAG.get() == null || REPORTING_MATCHER_FLAG.get() == false) {
-                addSimpleCheck(new ExecutedSimpleCheckImpl(StringDescription.toString(matcher),
-                        matcherResult ? null : getMismatchDescription(matcher, value)));
+                if (simpleChecks == null) simpleChecks = new ArrayList<>();
+                String matcherDescription = StringDescription.asString(matcher);
+                String mismatchDescription = matcherResult ? null : getMismatchDescription(matcher, value);
+                simpleChecks.add(new ExecutedSimpleCheckImpl(matcherDescription, mismatchDescription));
             }
             return matcherResult;
-        }
-
-        @Override
-        public void addDataFrom(ExecutedCompositeCheck check) {
-            for (ExecutedSimpleCheck simpleCheck : check.getSimpleChecks()) addSimpleCheck(simpleCheck);
-            for (ExecutedCompositeCheck compositeCheck : check.getCompositeChecks()) addCompositeCheck(compositeCheck);
-        }
-
-        @Override
-        public void addSimpleCheck(ExecutedSimpleCheck simpleCheck) {
-            if (simpleChecks == null) simpleChecks = new ArrayList<>();
-            simpleChecks.add(simpleCheck);
-            updateStatusAfterAddingCheckWithStatus(simpleCheck.getStatus());
-        }
-
-        @Override
-        public void addCompositeCheck(ExecutedCompositeCheck compositeCheck) {
-            if (compositeChecks == null) compositeChecks = new ArrayList<>();
-            compositeChecks.add(compositeCheck);
-            updateStatusAfterAddingCheckWithStatus(compositeCheck.getStatus());
-        }
-
-        private void updateStatusAfterAddingCheckWithStatus(Status newCheckStatus) {
-            if (status == UNCHECKED || newCheckStatus == FAILED) status = newCheckStatus;
         }
 
         private static String getMismatchDescription(Matcher<?> matcher, Object actualValue) {
@@ -269,6 +264,17 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         }
     }
 
+    private static Class<?> findClassOfT(Class<?> thisClass) {
+        for (Class<?> clazz = thisClass; clazz != Object.class; clazz = clazz.getSuperclass()) {
+            for (Method method : clazz.getDeclaredMethods()) {
+                if (method.getName().equals("runChecks") && method.getParameterTypes().length == 2 && !method.isSynthetic()) {
+                    return method.getParameterTypes()[0];
+                }
+            }
+        }
+        throw new Error("Cannot determine class of T from runChecks method");
+    }
+
     private static final ThreadLocal<Boolean> REPORTING_MATCHER_FLAG = new ThreadLocal<>();
-    private static final ThreadLocal<ExecutedCompositeCheckBuilder> CHECK_BUILDER_OF_OUTER_REPORTING_MATCHER = new ThreadLocal<>();
+    private static final ThreadLocal<ExecutedCompositeCheckImpl> CHECK_BUILDER_OF_OUTER_REPORTING_MATCHER = new ThreadLocal<>();
 }

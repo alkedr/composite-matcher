@@ -1,7 +1,6 @@
 package com.github.alkedr.matchers.reporting;
 
 import com.github.alkedr.matchers.reporting.impl.ClassifyingMatcher;
-import com.github.alkedr.matchers.reporting.impl.ReportingMatcherImpl;
 import com.github.alkedr.matchers.reporting.reporters.HtmlReporter;
 import com.github.alkedr.matchers.reporting.reporters.HtmlWithJsonReporter;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -13,12 +12,8 @@ import java.io.IOException;
 import java.util.*;
 
 import static ch.lambdaj.Lambda.on;
-import static com.github.alkedr.matchers.reporting.ValueExtractingMatcherForImplementing.ExecutedCompositeCheck;
-import static com.github.alkedr.matchers.reporting.extractors.map.ValueFromMapExtractor.valueOfKey;
-import static com.github.alkedr.matchers.reporting.extractors.object.FieldExtractor.field;
-import static com.github.alkedr.matchers.reporting.extractors.object.LambdajArgumentExtractor.resultOf;
 import static org.hamcrest.Matchers.any;
-import static org.hamcrest.core.Is.is;
+import static org.hamcrest.Matchers.equalTo;
 
 @SuppressWarnings("JUnitTestMethodWithNoAssertions")
 public class HtmlReporterTest {
@@ -33,11 +28,11 @@ public class HtmlReporterTest {
     public void memoryTest() throws IOException {
         System.out.println("start");
         Collection<String> strings = new ArrayList<>();
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 1000000; i++) {
             strings.add(RandomStringUtils.randomAlphanumeric(10));
         }
         System.out.println("strings are generated");
-        ExecutedCompositeCheck report = new ClassifyingMatcher().items(any(String.class), 1000).getReport(strings);
+        ReportingMatcher.ExecutedCompositeCheck report = new ClassifyingMatcher().items(any(String.class), 1000000).getReport(strings);
         System.out.println("report is built");
         String s = new HtmlWithJsonReporter().report(report);
         System.out.println("html size " + s.length());
@@ -55,16 +50,11 @@ public class HtmlReporterTest {
 
 
 
-    private static ReportingMatcherImpl<VeryComplexBean> veryComplexBeanMatcher() {
-        map(Integer.class, String.class)
-                .checkThat(valueOfKey(1), is(1))
-                .checkThat(valueOfKey(1), is(""))
-                ;
-
-        return object(VeryComplexBean.class)
-                .checkThat(field(VeryComplexBean.class, "correctField"), correctComplexBean())
-                .checkThat(field(VeryComplexBean.class, "incorrectField"), incorrectComplexBean())
-                .checkThat(field(VeryComplexBean.class, "uncheckedField"), beanWithGetters(Object.class))
+    private static ReportingMatcher<VeryComplexBean> veryComplexBeanMatcher() {
+        return new ObjectMatcher<VeryComplexBean>()
+                .field("correctField").is(correctComplexBean())
+                .field("incorrectField").is(incorrectComplexBean())
+//                .field("uncheckedField").is(correctComplexBean())
                 ;
     }
 
@@ -78,11 +68,11 @@ public class HtmlReporterTest {
 
     private static Matcher<ComplexBean> complexBean(String expectedStringPropertyValue) {
         ComplexBean on = on(ComplexBean.class);
-        return beanWithGetters(ComplexBean.class)
-                .checkThat(resultOf(on.isBooleanField()), is(false))
-                .checkThat(resultOf(on.getIntField()), is(1))
-                .checkThat(resultOf(on.getLongField()), is(2L))
-                .checkThat(resultOf(on.getStringField()), is(expectedStringPropertyValue))
+        return new ObjectMatcher<ComplexBean>()
+                .property(on.isBooleanField()).is(equalTo(false))
+                .property(on.getIntField()).is(equalTo(1))
+                .property(on.getLongField()).is(equalTo(2L))
+                .property(on.getStringField()).is(equalTo(expectedStringPropertyValue))
                 ;
     }
 

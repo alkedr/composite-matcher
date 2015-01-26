@@ -1,6 +1,5 @@
 package com.github.alkedr.matchers.reporting;
 
-import com.github.alkedr.matchers.reporting.checks.ExecutedCompositeCheck;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -13,10 +12,10 @@ import static java.util.Arrays.asList;
 public class CompositeMatcherTest {
     private static final Object OBJECT = new Object();
 //    private final CompositeMatcher<Object> matcher;
-    private final ExecutedCompositeCheck expectedExecutedCompositeCheck;
+    private final ReportingMatcher.ExecutedCompositeCheck expectedExecutedCompositeCheck;
 
     public CompositeMatcherTest(String testName, //CompositeMatcher<Object> matcher,
-                                ExecutedCompositeCheck expectedExecutedCompositeCheck) {
+                                ReportingMatcher.ExecutedCompositeCheck expectedExecutedCompositeCheck) {
 //        this.matcher = matcher;
         this.expectedExecutedCompositeCheck = expectedExecutedCompositeCheck;
     }

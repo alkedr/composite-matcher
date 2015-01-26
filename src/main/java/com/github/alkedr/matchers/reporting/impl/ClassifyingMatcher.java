@@ -1,6 +1,6 @@
 package com.github.alkedr.matchers.reporting.impl;
 
-import com.github.alkedr.matchers.reporting.checks.ExtractedValue;
+import com.github.alkedr.matchers.reporting.ReportingMatcher;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,9 +9,10 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.StringDescription.asString;
 
 // добавить возможность настройки отображения элементов (номер, item.toString, и т. п.)
-public class ClassifyingMatcher<T> extends ReportingMatcherImpl<Iterable<T>> {
+public class ClassifyingMatcher<T> extends ReportingMatcher<Iterable<T>> {
     private final List<PlannedCheck<T>> plannedChecks = new ArrayList<>();
 
 
@@ -40,9 +41,8 @@ public class ClassifyingMatcher<T> extends ReportingMatcherImpl<Iterable<T>> {
         return this;
     }
 
-
     @Override
-    public ExecutedCompositeCheckImpl getReportSafely(@Nullable Iterable<T> iterable) {
+    public void runChecks(@Nullable Iterable<T> iterable, ExecutedCompositeCheckBuilder checker) {
         Collection<CheckInProgress<T>> checksInProgress = new ArrayList<>();
         for (PlannedCheck<T> plannedCheck : plannedChecks) {
             checksInProgress.add(new CheckInProgress<>(plannedCheck));
@@ -52,25 +52,20 @@ public class ClassifyingMatcher<T> extends ReportingMatcherImpl<Iterable<T>> {
             for (T item : iterable) {
                 for (CheckInProgress<T> checkInProgress : checksInProgress) {
                     if (checkInProgress.valueMatcher.matches(item)) {
-                        checkInProgress.matchedItems.add(new ExtractedValue(null, item));
+                        checkInProgress.matchedItems.add(item);
                         break;
                     }
                 }
             }
         }
-/*
-        CheckExecutor<T> executor = new CheckExecutor<>(new ExtractedValue("", iterable));
+
         for (CheckInProgress<T> checkInProgress : checksInProgress) {
-            CheckExecutor<T> executorForGroup = new CheckExecutor<>(new ExtractedValue(asString(checkInProgress.valueMatcher), null));
-            CheckExecutor<Integer> executorForCount = new CheckExecutor<>(new ExtractedValue("count", checkInProgress.matchedItems.size()));
-            executorForCount.checkThat(checkInProgress.countMatcher);
-            executorForGroup.addCompositeCheck(executorForCount.buildCompositeCheck());
-            for (ExtractedValue matchedItem : checkInProgress.matchedItems) {
-                executorForGroup.addCompositeCheck(new CheckExecutor<T>(matchedItem).buildCompositeCheck());
+            ExecutedCompositeCheckBuilder checkerForGroup = checker.createCompositeCheck(asString(checkInProgress.valueMatcher), null, ExtractionStatus.NORMAL, null);
+            checkerForGroup.createCompositeCheck("count", checkInProgress.matchedItems.size(), ExtractionStatus.NORMAL, null).runMatcher(checkInProgress.countMatcher);
+            for (Object matchedItem : checkInProgress.matchedItems) {
+                checkerForGroup.createCompositeCheck(null, matchedItem, ExtractionStatus.NORMAL, null);
             }
-            executor.addCompositeCheck(executorForGroup.buildCompositeCheck());
         }
-        return executor.buildCompositeCheck();*/
     }
 
 
@@ -87,7 +82,7 @@ public class ClassifyingMatcher<T> extends ReportingMatcherImpl<Iterable<T>> {
     private static class CheckInProgress<T> {
         private final Matcher<T> valueMatcher;
         private final Matcher<Integer> countMatcher;
-        private final List<ExtractedValue> matchedItems = new ArrayList<>();
+        private final List<Object> matchedItems = new ArrayList<>();
 
         private CheckInProgress(PlannedCheck<T> plannedCheck) {
             this.valueMatcher = plannedCheck.valueMatcher;
