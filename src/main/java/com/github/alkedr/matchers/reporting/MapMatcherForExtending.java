@@ -2,7 +2,6 @@ package com.github.alkedr.matchers.reporting;
 
 import org.hamcrest.Matcher;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -22,23 +21,34 @@ public class MapMatcherForExtending<Key, Value, U extends MapMatcherForExtending
         return property(on(Map.class).size()).is(matchers);
     }
 
+    // TODO: возможность считать ошибкой лишние значения
 
-    @SafeVarargs
-    public final U valueOf(Key key, Matcher<? super Value>... matchers) {
-        return null;
-    }
-
-    public U valueOf(Key key, Collection<Matcher<? super Value>> matchers) {
-        return null;
-    }
-
-
-    @SafeVarargs
-    public final U valuesOf(Matcher<Key> keyMatcher, Matcher<? super Value>... matchers) {
-        return null;
-    }
-
-    public U valuesOf(Matcher<Key> keyMatcher, Collection<Matcher<? super Value>> matchers) {
-        return null;
-    }
+//    @SafeVarargs
+//    public final U valueOf(final Key key, Matcher<? super Value>... matchers) {
+//        return value(String.valueOf(key), new ValueExtractor<Map<Key, Value>>() {  // FIXME: ситуация, когда такого ключа нет
+//            @Override
+//            public Value extract(Map<Key, Value> map) throws Exception {
+//                return map.get(key);
+//            }
+//        });
+//    }
+//
+//    public U valueOf(final Key key, Collection<Matcher<? super Value>> matchers) {
+//        return value(String.valueOf(key), new ValueExtractor<Map<Key, Value>>() {  // FIXME: ситуация, когда такого ключа нет
+//            @Override
+//            public Value extract(Map<Key, Value> map) throws Exception {
+//                return map.get(key);
+//            }
+//        });
+//    }
+//
+//
+//    @SafeVarargs
+//    public final U valuesOf(Matcher<? super Key> keyMatcher, Matcher<? super Value>... matchers) {
+//        return null;
+//    }
+//
+//    public U valuesOf(Matcher<? super Key> keyMatcher, Collection<Matcher<? super Value>> matchers) {
+//        return null;
+//    }
 }

@@ -1,23 +1,25 @@
 package com.github.alkedr.matchers.reporting;
 
-import org.hamcrest.Matcher;
-
 import java.util.Collection;
-import java.util.List;
 
-import static ch.lambdaj.Lambda.on;
-import static org.hamcrest.Matchers.equalTo;
-
-public class CollectionMatcherForExtending<T, U extends CollectionMatcherForExtending<T, U>> extends ObjectMatcherForExtending<Collection<T>, U> {
-    public U size(int value) {
-        return size(equalTo(value));
+public class CollectionMatcherForExtending<T, U extends CollectionMatcherForExtending<T, U>> extends IterableMatcherForExtending<Collection<T>, U> {
+    public CollectionMatcherForExtending(Type type) {
+        super(type);
     }
-
-    private U size(Matcher<? super Integer>... matchers) {
-        return property(on(Collection.class).size()).is(matchers);
-    }
-
-    private U size(List<? extends Matcher<? super Integer>> matchers) {
-        return property(on(Collection.class).size()).is(matchers);
-    }
+//    @Override
+//    public U size(int value) {
+//        return it(hasSize(value));
+//    }
+//
+//    @Override
+//    public U size(Matcher<? super Integer>... matchers) {
+//        for (Matcher<? super Integer> matcher : matchers) it(hasSize(matcher));
+//        return (U) this;
+//    }
+//
+//    @Override
+//    public U size(List<? extends Matcher<? super Integer>> matchers) {
+//        for (Matcher<? super Integer> matcher : matchers) it(hasSize(matcher));
+//        return (U) this;
+//    }
 }

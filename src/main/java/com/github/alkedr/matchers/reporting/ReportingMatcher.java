@@ -18,15 +18,12 @@ import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedChec
 import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExtractionStatus.NORMAL;
 import static org.hamcrest.Matchers.isA;
 
-/**
- * Override runChecks.
- */
 public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
     @NotNull private final Class<? super T> tClass;
     private ExecutedCompositeCheck lastReport = null;
 
     protected ReportingMatcher() {
-        this.tClass = (Class<? super T>) findClassOfT(getClass());
+        this.tClass = findClassOfT(getClass());
     }
 
     protected ReportingMatcher(@NotNull Class<? super T> tClass) {
@@ -59,7 +56,7 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
 
     public ExecutedCompositeCheck getReport(@Nullable Object item) {
         ExecutedCompositeCheckBuilder checkBuilder = CHECK_BUILDER_OF_OUTER_REPORTING_MATCHER.get();
-        if (checkBuilder == null) checkBuilder = new ExecutedCompositeCheckImpl(null, item, NORMAL, null);
+        if (checkBuilder == null) checkBuilder = new ExecutedCompositeCheckImpl().value(item);
         if (tClass.isInstance(item)) {
             runChecks((T) item, checkBuilder);
         } else {
@@ -113,7 +110,6 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         List<? extends ExecutedCompositeCheck> getCompositeChecks();
     }
 
-
     public enum ExtractionStatus {  // TODO: оставить только NORMAL и ERROR?
         NORMAL,
         MISSING,
@@ -123,10 +119,14 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
     }
 
     public interface ExecutedCompositeCheckBuilder extends ExecutedCompositeCheck {
+        ExecutedCompositeCheckBuilder name(String newName);
+        ExecutedCompositeCheckBuilder value(Object newValue);
+        ExecutedCompositeCheckBuilder extractionStatus(ExtractionStatus extractionStatus);
+        ExecutedCompositeCheckBuilder extractionException(Exception newException);
         boolean runMatcher(Matcher<?> matcher);
         void runMatchers(Collection<? extends Matcher<?>> matchers);
         void runMatchers(Matcher<?>... matchers);
-        ExecutedCompositeCheckBuilder createCompositeCheck(String name, Object value, ExtractionStatus extractionStatus, Exception exception);
+        ExecutedCompositeCheckBuilder subcheck();
     }
 
 
@@ -160,23 +160,16 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
     }
 
 
+    // TODO: метод, вызываемый в самом конце, ходит по дереву проверок, вычисляет статусы, освобождает память,
+    // TODO: проверяет, что у всех проверок все обязательные поля не null
     private static final class ExecutedCompositeCheckImpl implements ExecutedCompositeCheckBuilder {
-        @Nullable private final String name;
-        @Nullable private final Object value;
-        @NotNull private final ExtractionStatus extractionStatus;
-        @Nullable private final Exception extractionException;  // TODO: embed in status?
+        @Nullable private String name = null;
+        @Nullable private Object value = null;
+        @NotNull private ExtractionStatus extractionStatus = NORMAL;
+        @Nullable private Exception extractionException = null;  // TODO: embed in status?
         @NotNull private Status status = UNCHECKED;
         @Nullable private List<ExecutedSimpleCheckImpl> simpleChecks = null;
         @Nullable private List<ExecutedCompositeCheckImpl> compositeChecks = null;
-
-        private ExecutedCompositeCheckImpl(@Nullable String name, @Nullable Object value,
-                                           @NotNull ExtractionStatus extractionStatus,
-                                           @Nullable Exception extractionException) {
-            this.name = name;
-            this.value = value;
-            this.extractionStatus = extractionStatus;
-            this.extractionException = extractionException;
-        }
 
         @Override
         @NotNull
@@ -236,11 +229,35 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         }
 
         @Override
-        public ExecutedCompositeCheckBuilder createCompositeCheck(String name, Object value, ExtractionStatus extractionStatus, Exception exception) {
+        public ExecutedCompositeCheckBuilder subcheck() {
             if (compositeChecks == null) compositeChecks = new ArrayList<>();
-            ExecutedCompositeCheckImpl result = new ExecutedCompositeCheckImpl(name, value, NORMAL, null);
+            ExecutedCompositeCheckImpl result = new ExecutedCompositeCheckImpl();
             compositeChecks.add(result);
             return result;
+        }
+
+        @Override
+        public ExecutedCompositeCheckBuilder name(String newName) {
+            this.name = newName;
+            return this;
+        }
+
+        @Override
+        public ExecutedCompositeCheckBuilder value(Object newValue) {
+            this.value = newValue;
+            return this;
+        }
+
+        @Override
+        public ExecutedCompositeCheckBuilder extractionStatus(ExtractionStatus extractionStatus) {
+            this.extractionStatus = extractionStatus;
+            return this;
+        }
+
+        @Override
+        public ExecutedCompositeCheckBuilder extractionException(Exception newException) {
+            this.extractionException = newException;
+            return this;
         }
 
         @Override
@@ -264,11 +281,11 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         }
     }
 
-    private static Class<?> findClassOfT(Class<?> thisClass) {
+    private static <T> Class<T> findClassOfT(Class<?> thisClass) {
         for (Class<?> clazz = thisClass; clazz != Object.class; clazz = clazz.getSuperclass()) {
             for (Method method : clazz.getDeclaredMethods()) {
                 if (method.getName().equals("runChecks") && method.getParameterTypes().length == 2 && !method.isSynthetic()) {
-                    return method.getParameterTypes()[0];
+                    return (Class<T>) method.getParameterTypes()[0];
                 }
             }
         }

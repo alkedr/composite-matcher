@@ -7,9 +7,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
+import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExtractionStatus.ERROR;
+
 public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatcherForExtending<T, U>> extends PlanningMatcherForExtending<T, U> {
     @SafeVarargs
-    public final U it(final Matcher<?>... matchers) {
+    public final U it(final Matcher<? super T>... matchers) {
         return addPlannedCheck(new PlannedCheck<T>() {
             @Override
             public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
@@ -18,7 +20,7 @@ public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatc
         });
     }
 
-    public U it(final Collection<? extends Matcher<?>> matchers) {
+    public U it(final Collection<? extends Matcher<? super T>> matchers) {
         return addPlannedCheck(new PlannedCheck<T>() {
             @Override
             public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
@@ -27,94 +29,45 @@ public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatc
         });
     }
 
-    public U it(final Matcher<?> matcher) {
-        return addPlannedCheck(new PlannedCheck<T>() {
-            @Override
-            public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
-                checker.runMatcher(matcher);
-            }
-        });
-    }
-
 
     @SafeVarargs
-    public final <V> U value(final ValueExtractor<T, V> valueExtractor, final Matcher<?>... matchers) {
+    public final <V> U value(final String name, final ValueExtractor<T> valueExtractor, final Matcher<? super V>... matchers) {
         return addPlannedCheck(new PlannedCheck<T>() {
             @Override
             public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
-                extractValueAndCreateCheckBuilder(item, checker, valueExtractor).runMatchers(matchers);
+                valueExtractor.extract(itemClass, item, checker).name(name).runMatchers(matchers);
             }
         });
     }
 
-    public <V> U value(final ValueExtractor<T, V> valueExtractor, final List<? extends Matcher<?>> matchers) {
+    public <V> U value(final String name, final ValueExtractor<T> valueExtractor, final List<? extends Matcher<? super V>> matchers) {
         return addPlannedCheck(new PlannedCheck<T>() {
             @Override
             public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
-                extractValueAndCreateCheckBuilder(item, checker, valueExtractor).runMatchers(matchers);
-            }
-        });
-    }
-
-    public <V> U value(final ValueExtractor<T, V> valueExtractor, final Matcher<?> matcher) {
-        return addPlannedCheck(new PlannedCheck<T>() {
-            @Override
-            public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
-                extractValueAndCreateCheckBuilder(item, checker, valueExtractor).runMatcher(matcher);
+                valueExtractor.extract(itemClass, item, checker).name(name).runMatchers(matchers);
             }
         });
     }
 
 
-    @SafeVarargs
-    public final <V> U value(final String name, final ValueExtractor<T, V> valueExtractor, final Matcher<?>... matchers) {
-        return addPlannedCheck(new PlannedCheck<T>() {
-            @Override
-            public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
-                extractValueAndCreateCheckBuilder(item, checker, name, valueExtractor).runMatchers(matchers);
+    public interface ValueExtractor<T> {
+        ExecutedCompositeCheckBuilder extract(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker);
+    }
+
+    public abstract static class SimpleValueExtractor<T, V> implements ValueExtractor<T> {
+        @Override
+        public ExecutedCompositeCheckBuilder extract(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
+            ExecutedCompositeCheckBuilder result = checker.subcheck();
+            if (item != null) {
+                try {
+                    result.value(extract(item));
+                } catch (Exception e) {
+                    result.extractionStatus(ERROR).extractionException(e);
+                }
             }
-        });
-    }
-
-    public <V> U value(final String name, final ValueExtractor<T, V> valueExtractor, final List<? extends Matcher<?>> matchers) {
-        return addPlannedCheck(new PlannedCheck<T>() {
-            @Override
-            public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
-                extractValueAndCreateCheckBuilder(item, checker, name, valueExtractor).runMatchers(matchers);
-            }
-        });
-    }
-
-    public <V> U value(final String name, final ValueExtractor<T, V> valueExtractor, final Matcher<?> matcher) {
-        return addPlannedCheck(new PlannedCheck<T>() {
-            @Override
-            public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
-                extractValueAndCreateCheckBuilder(item, checker, name, valueExtractor).runMatcher(matcher);
-            }
-        });
-    }
-
-
-    private <V> ExecutedCompositeCheckBuilder extractValueAndCreateCheckBuilder(T item, ExecutedCompositeCheckBuilder checker, ValueExtractor<T, V> extractor) {
-        return extractValueAndCreateCheckBuilder(item, checker, extractValueNameFromValueExtractor(extractor), extractor);
-    }
-
-    private <V> ExecutedCompositeCheckBuilder extractValueAndCreateCheckBuilder(T item, ExecutedCompositeCheckBuilder checker,
-                                                                                String name, ValueExtractor<T, V> extractor) {
-        try {
-            return checker.createCompositeCheck(name, extractor.extract(item), ExtractionStatus.NORMAL, null);
-        } catch (Exception exception) {
-            return checker.createCompositeCheck(name, null, ExtractionStatus.ERROR, exception);
+            return result;
         }
-    }
 
-    private <V> String extractValueNameFromValueExtractor(ValueExtractor<T, V> extractor) {
-        // TODO
-        return null;
-    }
-
-
-    public interface ValueExtractor<T, V> {
-        V extract(T t) throws Exception;
+        public abstract V extract(@NotNull T t) throws Exception;
     }
 }
