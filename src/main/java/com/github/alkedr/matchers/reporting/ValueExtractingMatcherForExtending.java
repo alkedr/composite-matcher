@@ -54,9 +54,10 @@ public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatc
         ExecutedCompositeCheckBuilder extract(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker);
     }
 
-    public abstract static class SimpleValueExtractor<T, V> implements ValueExtractor<T> {
+    @FunctionalInterface
+    public interface SimpleValueExtractor<T, V> extends ValueExtractor<T> {
         @Override
-        public ExecutedCompositeCheckBuilder extract(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
+        default ExecutedCompositeCheckBuilder extract(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
             ExecutedCompositeCheckBuilder result = checker.subcheck();
             if (item != null) {
                 try {
@@ -68,6 +69,6 @@ public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatc
             return result;
         }
 
-        public abstract V extract(@NotNull T t) throws Exception;
+        V extract(@NotNull T t) throws Exception;
     }
 }

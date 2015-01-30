@@ -52,9 +52,9 @@ public class HtmlReporterTest {
 
     private static ReportingMatcher<VeryComplexBean> veryComplexBeanMatcher() {
         return new ObjectMatcher<VeryComplexBean>()
-//                .field("correctField").is(correctComplexBean())
-//                .field("incorrectField").is(incorrectComplexBean())
-//                .field("uncheckedField").is(correctComplexBean())
+                .field(x -> x.correctField).is(correctComplexBean())
+                .field("incorrectField").is(incorrectComplexBean())
+                .field("uncheckedField").is(correctComplexBean())
                 ;
     }
 
