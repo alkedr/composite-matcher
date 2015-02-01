@@ -19,19 +19,19 @@ import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExtractionSt
 import static org.hamcrest.Matchers.isA;
 
 public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
-    @NotNull private final Class<? super T> tClass;
+    @NotNull private final Class<?> tClass;
     private ExecutedCompositeCheck lastReport = null;
 
     protected ReportingMatcher() {
         this.tClass = findClassOfT(getClass());
     }
 
-    protected ReportingMatcher(@NotNull Class<? super T> tClass) {
+    protected ReportingMatcher(@NotNull Class<?> tClass) {
         this.tClass = tClass;
     }
 
 
-    public Class<? super T> getActualItemClass() {
+    public Class<?> getActualItemClass() {
         return tClass;
     }
 
@@ -110,7 +110,7 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         List<? extends ExecutedCompositeCheck> getCompositeChecks();
     }
 
-    public enum ExtractionStatus {  // TODO: оставить только NORMAL и ERROR?
+    public enum ExtractionStatus {
         NORMAL,
         MISSING,
         UNEXPECTED,
@@ -119,13 +119,14 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
     }
 
     public interface ExecutedCompositeCheckBuilder extends ExecutedCompositeCheck {
-        ExecutedCompositeCheckBuilder name(String newName);
+        ExecutedCompositeCheckBuilder name(@NotNull String newName);
         ExecutedCompositeCheckBuilder value(Object newValue);
-        ExecutedCompositeCheckBuilder extractionStatus(ExtractionStatus extractionStatus);
+        ExecutedCompositeCheckBuilder extractionStatus(@NotNull ExtractionStatus newExtractionStatus);
         ExecutedCompositeCheckBuilder extractionException(Exception newException);
         boolean runMatcher(Matcher<?> matcher);
         void runMatchers(Collection<? extends Matcher<?>> matchers);
         void runMatchers(Matcher<?>... matchers);
+        void runMatchersObject(Object matchers);
         ExecutedCompositeCheckBuilder subcheck();
     }
 
@@ -229,6 +230,14 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         }
 
         @Override
+        public void runMatchersObject(Object matchers) {
+            if (matchers instanceof Matcher) runMatcher((Matcher<?>) matchers); else
+            if (matchers instanceof Collection) runMatchers((Collection<Matcher<?>>) matchers); else
+            if (matchers instanceof Matcher[]) runMatchers((Matcher<?>[]) matchers); else
+            throw new Error("runMatchersObject: unknown matchers object " + (matchers == null ? "null" : matchers.getClass().getName()));
+        }
+
+        @Override
         public ExecutedCompositeCheckBuilder subcheck() {
             if (compositeChecks == null) compositeChecks = new ArrayList<>();
             ExecutedCompositeCheckImpl result = new ExecutedCompositeCheckImpl();
@@ -237,7 +246,7 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         }
 
         @Override
-        public ExecutedCompositeCheckBuilder name(String newName) {
+        public ExecutedCompositeCheckBuilder name(@NotNull String newName) {
             this.name = newName;
             return this;
         }
@@ -249,8 +258,8 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         }
 
         @Override
-        public ExecutedCompositeCheckBuilder extractionStatus(ExtractionStatus extractionStatus) {
-            this.extractionStatus = extractionStatus;
+        public ExecutedCompositeCheckBuilder extractionStatus(@NotNull ExtractionStatus newExtractionStatus) {
+            this.extractionStatus = newExtractionStatus;
             return this;
         }
 
@@ -281,11 +290,11 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         }
     }
 
-    private static <T> Class<T> findClassOfT(Class<?> thisClass) {
+    private static Class<?> findClassOfT(Class<?> thisClass) {
         for (Class<?> clazz = thisClass; clazz != Object.class; clazz = clazz.getSuperclass()) {
             for (Method method : clazz.getDeclaredMethods()) {
                 if ("runChecks".equals(method.getName()) && method.getParameterTypes().length == 2 && !method.isSynthetic()) {
-                    return (Class<T>) method.getParameterTypes()[0];
+                    return method.getParameterTypes()[0];
                 }
             }
         }

@@ -2,11 +2,12 @@ package com.github.alkedr.matchers.reporting;
 
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 
 import static ch.lambdaj.Lambda.argument;
+import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExtractionStatus.*;
 import static org.apache.commons.lang3.reflect.FieldUtils.readField;
 import static org.apache.commons.lang3.reflect.MethodUtils.invokeMethod;
 
@@ -16,21 +17,18 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
         return field(nameForReportAndExtraction, nameForReportAndExtraction);
     }
 
-    public <V> ValueCheckAdder<V> field(String nameForReport, final String nameForExtraction) {
-        return field(nameForReport, new SimpleValueExtractor<T, V>() {
-            @Override
-            public V extract(@NotNull T t) throws IllegalAccessException {
-                return (V) readField(t, nameForExtraction, true);
-            }
-        });
+    public <V> ValueCheckAdder<V> field(String nameForReport, String nameForExtraction) {
+        clear();
+        this.fieldNameForReport = nameForReport;
+        this.fieldNameForExtraction = nameForExtraction;
+        return (ValueCheckAdder<V>) valueCheckAdder;
     }
 
-//    public <V> ValueCheckAdder<V> field(SimpleValueExtractor<T, V> fieldValueExtractor) {
-//        return field(extractFieldNameFromValueExtractor(fieldValueExtractor), fieldValueExtractor);
-//    }
-
-    public <V> ValueCheckAdder<V> field(String nameForReport, SimpleValueExtractor<T, V> fieldValueExtractor) {
-        return new ValueCheckAdder<>(nameForReport, fieldValueExtractor);
+    public <V> ValueCheckAdder<V> field(String nameForReport, ValueExtractor<T> valueExtractor) {
+        clear();
+        this.fieldNameForReport = nameForReport;
+        this.fieldValueExtractor = valueExtractor;
+        return (ValueCheckAdder<V>) valueCheckAdder;
     }
 
 
@@ -38,140 +36,172 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
         return method(nameForReportAndExtraction, nameForReportAndExtraction, arguments);
     }
 
-    public <V> ValueCheckAdder<V> method(String nameForReport, final String nameForExtraction, final Object... arguments) {
-        return new ValueCheckAdder<>(nameForReport, new SimpleValueExtractor<T, V>() {
-            @Override
-            public V extract(@NotNull T t) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-                return (V) invokeMethod(t, nameForExtraction, arguments);
-            }
-        });
+    public <V> ValueCheckAdder<V> method(String nameForReport, String nameForExtraction, Object... arguments) {
+        clear();
+        this.methodNameForReport = nameForReport;
+        this.methodNameForExtraction = nameForExtraction;
+        this.methodArguments = arguments;
+        return (ValueCheckAdder<V>) valueCheckAdder;
     }
 
-//    public <V> ValueCheckAdder<V> method(SimpleValueExtractor<T, V> methodReturnValueExtractor) {
-//        return method(extractMethodNameFromValueExtractor(methodReturnValueExtractor), methodReturnValueExtractor);
-//    }
-
-    public <V> ValueCheckAdder<V> method(String nameForReport, SimpleValueExtractor<T, V> methodReturnValueExtractor) {
-        return new ValueCheckAdder<>(nameForReport, methodReturnValueExtractor);
+    public <V> ValueCheckAdder<V> method(String nameForReport, ValueExtractor<T> returnValueExtractor) {
+        clear();
+        this.methodNameForReport = nameForReport;
+        this.methodReturnValueExtractor = returnValueExtractor;
+        return (ValueCheckAdder<V>) valueCheckAdder;
     }
 
     // TODO: method(lambdajPlaceholder), как property, только в названии полное имя метода с параметрами
+    // TODO: objectMatcher.expect(equalTo(42)).getAnswer();
 
 
     public <V> ValueCheckAdder<V> property(V lambdajPlaceholder) {
         return property(argument(lambdajPlaceholder).getInkvokedPropertyName(), lambdajPlaceholder);
     }
 
-    public <V> ValueCheckAdder<V> property(String nameForReport, final V lambdajPlaceholder) {
-        return new ValueCheckAdder<>(nameForReport, new SimpleValueExtractor<T, V>() {
-            @Override
-            public V extract(@NotNull T t) {
-                return argument(lambdajPlaceholder).evaluate(t);
-            }
-        });
+    public <V> ValueCheckAdder<V> property(String nameForReport, V lambdajPlaceholder) {
+        clear();
+        this.propertyNameForReport = nameForReport;
+        this.propertyLambdajPlaceholder = lambdajPlaceholder;
+        return (ValueCheckAdder<V>) valueCheckAdder;
     }
+
 
 
     public class ValueCheckAdder<V> {
-        private final String name;
-        private final ValueExtractor<T> extractor;
-
-        private ValueCheckAdder(String name, ValueExtractor<T> extractor) {
-            this.name = name;
-            this.extractor = extractor;
-        }
-
-        public U is(Matcher<?>... matchers) {
-            return value(name, extractor, (Matcher<? super Object>[]) matchers);
+        public final U is(Matcher<?>... matchers) {
+            return addPlannedCheck(getPlannedCheck(matchers));
         }
 
         public U is(Collection<? extends Matcher<? super V>> matchers) {
-            return value(name, extractor, matchers);
+            return addPlannedCheck(getPlannedCheck(matchers));
+        }
+
+        public final U returns(Matcher<?>... matchers) {
+            return is(matchers);
+        }
+
+        public U returns(Collection<? extends Matcher<? super V>> matchers) {
+            return is(matchers);
         }
     }
 
 
-/*
-    private static final ThreadLocal<Map<Class<?>, String>> SIMPLE_VALUE_EXTRACTOR_FIELD_NAME_CACHE = new ThreadLocal<>();
-    private static final ThreadLocal<Map<Class<?>, String>> SIMPLE_VALUE_EXTRACTOR_METHOD_NAME_CACHE = new ThreadLocal<>();
-
-    private <V> String extractFieldNameFromValueExtractor(SimpleValueExtractor<T, V> extractor) {
-        return extractNameFromValueExtractor(extractor, new NameExtractingClassVisitor("extract", SimpleValueExtractorType.FIELD), SIMPLE_VALUE_EXTRACTOR_FIELD_NAME_CACHE);
-    }
-
-    private <V> String extractMethodNameFromValueExtractor(SimpleValueExtractor<T, V> extractor) {
-        return extractNameFromValueExtractor(extractor, new NameExtractingClassVisitor("extract", SimpleValueExtractorType.METHOD), SIMPLE_VALUE_EXTRACTOR_METHOD_NAME_CACHE);
-    }
-
-    private <V> String extractNameFromValueExtractor(SimpleValueExtractor<T, V> extractor, NameExtractingClassVisitor visitor, ThreadLocal<Map<Class<?>, String>> cache) {
-        if (cache.get() == null) cache.set(new HashMap<Class<?>, String>());
-        if (!cache.get().containsKey(extractor.getClass())) {
-            new ClassReader(getClassBytecode(extractor.getClass())).accept(visitor, SKIP_DEBUG);
-            cache.get().put(extractor.getClass(), visitor.getName());
+    private PlannedCheck<T> getPlannedCheck(Object matchers) {
+        if (fieldNameForReport != null) {
+            if (fieldNameForExtraction != null) return getFieldNamePlannedCheck(fieldNameForReport, fieldNameForExtraction, matchers);
+            if (fieldValueExtractor != null) return getFieldExtractorPlannedCheck(fieldNameForReport, fieldValueExtractor, matchers);
+            throw new RuntimeException("fieldNameForReport is not null but both fieldNameForExtraction and fieldValueExtractor are null");
         }
-        return cache.get().get(extractor.getClass());
-    }
-
-    private static byte[] getClassBytecode(Class<?> clazz) {
-        try {
-            return toByteArray(clazz.getResourceAsStream("/" + clazz.getName().replace('.', '/') + ".class"));
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to read bytecode of class " + clazz.getName(), e);
-        }
-    }
-
-
-    private static class NameExtractingClassVisitor extends ClassVisitor {
-        private final String methodName;
-        private final SimpleValueExtractorType type;
-        private String name = null;
-
-        private NameExtractingClassVisitor(String methodName, SimpleValueExtractorType type) {
-            super(Opcodes.ASM5);
-            this.methodName = methodName;
-            this.type = type;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-            return name.equals(methodName) ? new ValueExtractorMethodVisitor() : null;
-        }
-
-        private class ValueExtractorMethodVisitor extends MethodVisitor {
-            private ValueExtractorMethodVisitor() {
-                super(Opcodes.ASM5);
+        if (methodNameForReport != null) {
+            if (methodNameForExtraction != null && methodArguments != null) {
+                return getMethodNamePlannedCheck(methodNameForReport, methodNameForExtraction, methodArguments, matchers);
             }
+            if (methodReturnValueExtractor != null) return getMathodExtractorPlannedCheck(methodNameForReport, methodReturnValueExtractor, matchers);
+            throw new RuntimeException("methodNameForReport is not null but one of methodNameForExtraction and methodArguments and methodReturnValueExtractor are null");
+        }
+        if (propertyNameForReport != null) {
+            if (propertyLambdajPlaceholder != null) return getLambdajPropertyPlannedCheck(propertyNameForReport, propertyLambdajPlaceholder, matchers);
+            throw new RuntimeException("propertyNameForReport is not null but propertyLambdajPlaceholder is null");
+        }
+        throw new RuntimeException("fieldNameForReport, methodNameForReport and propertyNameForReport are null");
+    }
 
+
+    private static <T> PlannedCheck<T> getFieldNamePlannedCheck(final String fieldNameForReport, final String fieldNameForExtraction, final Object matchers) {
+        return new PlannedCheck<T>() {
             @Override
-            public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-                if (type == SimpleValueExtractorType.FIELD && opcode == Opcodes.GETFIELD) {
-                    if (NameExtractingClassVisitor.this.name == null) {
-                        NameExtractingClassVisitor.this.name = name;
-                    } else {
-                        throw new RuntimeException("More than one GETFIELD");
+            public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
+                if (item == null) {
+                    checker.subcheck().name(fieldNameForReport).extractionStatus(MISSING);
+                } else {
+                    try {
+                        checker.subcheck().name(fieldNameForReport).value(readField(item, fieldNameForExtraction, true)).runMatchersObject(matchers);
+                    } catch (Exception e) {
+                        checker.subcheck().name(fieldNameForReport).extractionStatus(ERROR).extractionException(e);
                     }
                 }
             }
+        };
+    }
 
+    private static <T> PlannedCheck<T> getFieldExtractorPlannedCheck(final String fieldNameForReport, final ValueExtractor<T> fieldValueExtractor, final Object matchers) {
+        return new PlannedCheck<T>() {
             @Override
-            public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-                if (type == SimpleValueExtractorType.METHOD) {
-                    if (NameExtractingClassVisitor.this.name == null) {
-                        NameExtractingClassVisitor.this.name = name;
-                    } else {
-                        throw new RuntimeException("More than one method call");
+            public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
+                fieldValueExtractor.extract(itemClass, item, checker).name(fieldNameForReport).runMatchersObject(matchers);
+            }
+        };
+    }
+
+    private static <T> PlannedCheck<T> getMethodNamePlannedCheck(final String methodNameForReport, final String methodNameForExtraction, final Object[] methodArguments, final Object matchers) {
+        return new PlannedCheck<T>() {
+            @Override
+            public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
+                if (item == null) {
+                    checker.subcheck().name(methodNameForReport).extractionStatus(MISSING);
+                } else {
+                    try {
+                        checker.subcheck().name(methodNameForReport).value(invokeMethod(item, methodNameForExtraction, methodArguments)).runMatchersObject(matchers);
+                    } catch (Exception e) {
+                        checker.subcheck().name(methodNameForReport).extractionStatus(ERROR).extractionException(e);
                     }
                 }
             }
-        }
+        };
     }
 
-    private enum SimpleValueExtractorType {
-        FIELD,
-        METHOD,
-    }*/
+    private static <T> PlannedCheck<T> getMathodExtractorPlannedCheck(final String methodNameForReport, final ValueExtractor<T> methodReturnValueExtractor, final Object matchers) {
+        return new PlannedCheck<T>() {
+            @Override
+            public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
+                methodReturnValueExtractor.extract(itemClass, item, checker).name(methodNameForReport).runMatchersObject(matchers);
+            }
+        };
+    }
+
+    private static <T> PlannedCheck<T> getLambdajPropertyPlannedCheck(final String propertyNameForReport, final Object propertyLambdajPlaceholder, final Object matchers) {
+        return new PlannedCheck<T>() {
+            @Override
+            public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
+                if (item == null) {
+                    checker.subcheck().name(propertyNameForReport).extractionStatus(MISSING);
+                } else {
+                    try {
+                        checker.subcheck().name(propertyNameForReport).value(argument(propertyLambdajPlaceholder).evaluate(item)).runMatchersObject(matchers);
+                    } catch (Exception e) {
+                        checker.subcheck().name(propertyNameForReport).extractionStatus(ERROR).extractionException(e);
+                    }
+                }
+            }
+        };
+    }
+
+
+    private void clear() {
+        fieldNameForReport = null;
+        fieldNameForExtraction = null;
+        fieldValueExtractor = null;
+        methodNameForReport = null;
+        methodNameForExtraction = null;
+        methodArguments = null;
+        methodReturnValueExtractor = null;
+        propertyNameForReport = null;
+        propertyLambdajPlaceholder = null;
+    }
+
+
+    private final ValueCheckAdder<?> valueCheckAdder = new ValueCheckAdder<Object>();
+
+    @Nullable private String fieldNameForReport = null;
+    @Nullable private String fieldNameForExtraction = null;
+    @Nullable private ValueExtractor<T> fieldValueExtractor = null;
+
+    @Nullable private String methodNameForReport = null;
+    @Nullable private String methodNameForExtraction = null;
+    @Nullable private Object[] methodArguments = null;
+    @Nullable private ValueExtractor<T> methodReturnValueExtractor = null;
+
+    @Nullable private String propertyNameForReport = null;
+    @Nullable private Object propertyLambdajPlaceholder = null;
 }
