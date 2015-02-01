@@ -10,7 +10,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <compiler.version>1.8</compiler.version>
+        <compiler.version>1.7</compiler.version>
     </properties>
 
     <distributionManagement>

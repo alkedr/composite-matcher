@@ -2,23 +2,15 @@ package com.github.alkedr.matchers.reporting;
 
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Collection;
 
 import static ch.lambdaj.Lambda.argument;
-import static org.apache.commons.io.IOUtils.toByteArray;
 import static org.apache.commons.lang3.reflect.FieldUtils.readField;
 import static org.apache.commons.lang3.reflect.MethodUtils.invokeMethod;
-import static org.objectweb.asm.ClassReader.SKIP_DEBUG;
 
+// TODO: поддерживать вычисление выражений, например fieldX.methodY().listFieldZ.get(1) ?
 public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T, U>> extends ValueExtractingMatcherForExtending<T, U> {
     public <V> ValueCheckAdder<V> field(String nameForReportAndExtraction) {
         return field(nameForReportAndExtraction, nameForReportAndExtraction);
@@ -33,9 +25,9 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
         });
     }
 
-    public <V> ValueCheckAdder<V> field(SimpleValueExtractor<T, V> fieldValueExtractor) {
-        return field(extractFieldNameFromValueExtractor(fieldValueExtractor), fieldValueExtractor);
-    }
+//    public <V> ValueCheckAdder<V> field(SimpleValueExtractor<T, V> fieldValueExtractor) {
+//        return field(extractFieldNameFromValueExtractor(fieldValueExtractor), fieldValueExtractor);
+//    }
 
     public <V> ValueCheckAdder<V> field(String nameForReport, SimpleValueExtractor<T, V> fieldValueExtractor) {
         return new ValueCheckAdder<>(nameForReport, fieldValueExtractor);
@@ -55,9 +47,9 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
         });
     }
 
-    public <V> ValueCheckAdder<V> method(SimpleValueExtractor<T, V> methodReturnValueExtractor) {
-        return method(extractMethodNameFromValueExtractor(methodReturnValueExtractor), methodReturnValueExtractor);
-    }
+//    public <V> ValueCheckAdder<V> method(SimpleValueExtractor<T, V> methodReturnValueExtractor) {
+//        return method(extractMethodNameFromValueExtractor(methodReturnValueExtractor), methodReturnValueExtractor);
+//    }
 
     public <V> ValueCheckAdder<V> method(String nameForReport, SimpleValueExtractor<T, V> methodReturnValueExtractor) {
         return new ValueCheckAdder<>(nameForReport, methodReturnValueExtractor);
@@ -93,13 +85,13 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
             return value(name, extractor, (Matcher<? super Object>[]) matchers);
         }
 
-        public U is(List<? extends Matcher<? super V>> matchers) {
+        public U is(Collection<? extends Matcher<? super V>> matchers) {
             return value(name, extractor, matchers);
         }
     }
 
 
-
+/*
     private static final ThreadLocal<Map<Class<?>, String>> SIMPLE_VALUE_EXTRACTOR_FIELD_NAME_CACHE = new ThreadLocal<>();
     private static final ThreadLocal<Map<Class<?>, String>> SIMPLE_VALUE_EXTRACTOR_METHOD_NAME_CACHE = new ThreadLocal<>();
 
@@ -181,5 +173,5 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
     private enum SimpleValueExtractorType {
         FIELD,
         METHOD,
-    }
+    }*/
 }

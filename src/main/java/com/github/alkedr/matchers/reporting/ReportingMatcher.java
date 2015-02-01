@@ -284,7 +284,7 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
     private static <T> Class<T> findClassOfT(Class<?> thisClass) {
         for (Class<?> clazz = thisClass; clazz != Object.class; clazz = clazz.getSuperclass()) {
             for (Method method : clazz.getDeclaredMethods()) {
-                if (method.getName().equals("runChecks") && method.getParameterTypes().length == 2 && !method.isSynthetic()) {
+                if ("runChecks".equals(method.getName()) && method.getParameterTypes().length == 2 && !method.isSynthetic()) {
                     return (Class<T>) method.getParameterTypes()[0];
                 }
             }

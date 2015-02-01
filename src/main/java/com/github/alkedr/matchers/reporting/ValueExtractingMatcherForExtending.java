@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 
 import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExtractionStatus.ERROR;
 
@@ -40,7 +39,7 @@ public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatc
         });
     }
 
-    public <V> U value(final String name, final ValueExtractor<T> valueExtractor, final List<? extends Matcher<? super V>> matchers) {
+    public <V> U value(final String name, final ValueExtractor<T> valueExtractor, final Collection<? extends Matcher<? super V>> matchers) {
         return addPlannedCheck(new PlannedCheck<T>() {
             @Override
             public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
@@ -54,10 +53,9 @@ public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatc
         ExecutedCompositeCheckBuilder extract(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker);
     }
 
-    @FunctionalInterface
-    public interface SimpleValueExtractor<T, V> extends ValueExtractor<T> {
+    public abstract static class SimpleValueExtractor<T, V> implements ValueExtractor<T> {
         @Override
-        default ExecutedCompositeCheckBuilder extract(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
+        public ExecutedCompositeCheckBuilder extract(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
             ExecutedCompositeCheckBuilder result = checker.subcheck();
             if (item != null) {
                 try {
@@ -69,6 +67,6 @@ public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatc
             return result;
         }
 
-        V extract(@NotNull T t) throws Exception;
+        public abstract V extract(@NotNull T t) throws Exception;
     }
 }
