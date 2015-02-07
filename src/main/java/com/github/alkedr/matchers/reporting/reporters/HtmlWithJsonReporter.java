@@ -48,9 +48,9 @@ public class HtmlWithJsonReporter implements Reporter {
             w.write(",es:");
             w.write(String.valueOf(check.getStatus().ordinal()));
         }
-        if (check.getExtractionException() != null) {
+        if (check.getExtractionStatus().getException() != null) {
             w.write(",ee:");
-            writeJavaScriptStringLiteral(String.valueOf(check.getExtractionException()), w);
+            writeJavaScriptStringLiteral(String.valueOf(check.getExtractionStatus().getException()), w);
         }
         if (!check.getSimpleChecks().isEmpty()) {
             w.write(",sc:[");

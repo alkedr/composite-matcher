@@ -69,6 +69,7 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
 
     public abstract void runChecks(@Nullable T item, ExecutedCompositeCheckBuilder checker);
 
+
     public interface ExecutedCheck {
         @NotNull Status getStatus();
 
@@ -76,6 +77,32 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
             UNCHECKED,
             PASSED,
             FAILED,
+        }
+
+
+        public static class Status2 {
+            public static final Status2 UNCHECKED = new Status2(null);  // извлечено норм, проверок нет
+            public static final Status2 PASSED = new Status2(null);     // извлечено норм, проверки успешны
+            public static final Status2 UNEXPECTED = new Status2(null);
+
+
+//            public static final Status2 NORMAL = new ExtractionStatus(null);
+//            public static final Status2 MISSING = new ExtractionStatus(null);
+//            public static final Status2 UNEXPECTED = new ExtractionStatus(null);
+
+            private final Exception exception;
+
+            public ExtractionStatus(Exception exception) {
+                this.exception = exception;
+            }
+
+            public Exception getException() {
+                return exception;
+            }
+
+            public static ExtractionStatus extractionError(Exception exception) {
+                return new ExtractionStatus(exception);
+            }
         }
     }
 
@@ -94,7 +121,6 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         @Nullable String getName();
         @Nullable Object getValue();
         @NotNull ExtractionStatus getExtractionStatus();
-        @Nullable Exception getExtractionException();
 
         /**
          * @return результаты запуска матчеров на проверяемом значении
@@ -110,24 +136,42 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         List<? extends ExecutedCompositeCheck> getCompositeChecks();
     }
 
-    public enum ExtractionStatus {
-        NORMAL,
-        MISSING,
-        UNEXPECTED,
-        ERROR,
-        ;
+    public static class ExtractionStatus {
+        public static final ExtractionStatus NORMAL = new ExtractionStatus(null);
+        public static final ExtractionStatus MISSING = new ExtractionStatus(null);
+        public static final ExtractionStatus UNEXPECTED = new ExtractionStatus(null);
+
+        private final Exception exception;
+
+        public ExtractionStatus(Exception exception) {
+            this.exception = exception;
+        }
+
+        public Exception getException() {
+            return exception;
+        }
+
+        public static ExtractionStatus extractionError(Exception exception) {
+            return new ExtractionStatus(exception);
+        }
     }
 
     public interface ExecutedCompositeCheckBuilder extends ExecutedCompositeCheck {
+        ExecutedCompositeCheckBuilder subcheck();
+
         ExecutedCompositeCheckBuilder name(@NotNull String newName);
         ExecutedCompositeCheckBuilder value(Object newValue);
         ExecutedCompositeCheckBuilder extractionStatus(@NotNull ExtractionStatus newExtractionStatus);
         ExecutedCompositeCheckBuilder extractionException(Exception newException);
+
         boolean runMatcher(Matcher<?> matcher);
         void runMatchers(Collection<? extends Matcher<?>> matchers);
         void runMatchers(Matcher<?>... matchers);
+
+        /**
+         * @param matchers Matcher, Collection<Matcher> или Matcher[]
+         */
         void runMatchersObject(Object matchers);
-        ExecutedCompositeCheckBuilder subcheck();
     }
 
 
@@ -167,7 +211,6 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         @Nullable private String name = null;
         @Nullable private Object value = null;
         @NotNull private ExtractionStatus extractionStatus = NORMAL;
-        @Nullable private Exception extractionException = null;  // TODO: embed in status?
         @NotNull private Status status = UNCHECKED;
         @Nullable private List<ExecutedSimpleCheckImpl> simpleChecks = null;
         @Nullable private List<ExecutedCompositeCheckImpl> compositeChecks = null;
@@ -194,12 +237,6 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         @NotNull
         public ExtractionStatus getExtractionStatus() {
             return extractionStatus;
-        }
-
-        @Override
-        @Nullable
-        public Exception getExtractionException() {
-            return extractionException;
         }
 
         @Override
@@ -234,7 +271,7 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
             if (matchers instanceof Matcher) runMatcher((Matcher<?>) matchers); else
             if (matchers instanceof Collection) runMatchers((Collection<Matcher<?>>) matchers); else
             if (matchers instanceof Matcher[]) runMatchers((Matcher<?>[]) matchers); else
-            throw new Error("runMatchersObject: unknown matchers object " + (matchers == null ? "null" : matchers.getClass().getName()));
+            throw new IllegalArgumentException("runMatchersObject: unknown matchers object " + (matchers == null ? "null" : matchers.getClass().getName()));
         }
 
         @Override
@@ -265,7 +302,6 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
 
         @Override
         public ExecutedCompositeCheckBuilder extractionException(Exception newException) {
-            this.extractionException = newException;
             return this;
         }
 

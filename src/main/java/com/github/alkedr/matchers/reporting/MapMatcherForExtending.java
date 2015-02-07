@@ -1,25 +1,19 @@
 package com.github.alkedr.matchers.reporting;
 
-import org.hamcrest.Matcher;
-
-import java.util.List;
 import java.util.Map;
 
-import static ch.lambdaj.Lambda.on;
-import static org.hamcrest.Matchers.equalTo;
-
-public class MapMatcherForExtending<Key, Value, U extends MapMatcherForExtending<Key, Value, U>> extends ObjectMatcherForExtending<Map<Key, Value>, U> {
-    public U size(int value) {
-        return size(equalTo(value));
-    }
-
-    private U size(Matcher<? super Integer>... matchers) {
-        return property(on(Map.class).size()).is(matchers);
-    }
-
-    private U size(List<? extends Matcher<? super Integer>> matchers) {
-        return property(on(Map.class).size()).is(matchers);
-    }
+public class MapMatcherForExtending<Key, Value, U extends MapMatcherForExtending<Key, Value, U>> extends ValueExtractingMatcherForExtending<Map<Key, Value>, U> {
+//    public U size(int value) {
+//        return size(equalTo(value));
+//    }
+//
+//    private U size(Matcher<? super Integer>... matchers) {
+//        return property(on(Map.class).size()).is(matchers);
+//    }
+//
+//    private U size(List<? extends Matcher<? super Integer>> matchers) {
+//        return property(on(Map.class).size()).is(matchers);
+//    }
 
     // TODO: возможность считать ошибкой лишние значения
 
