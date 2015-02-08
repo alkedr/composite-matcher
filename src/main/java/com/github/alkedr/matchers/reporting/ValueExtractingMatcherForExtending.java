@@ -6,8 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExtractionStatus.MISSING;
-import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExtractionStatus.extractionError;
+import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedCompositeCheck.ExtractionStatus.*;
 
 public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatcherForExtending<T, U>> extends PlanningMatcherForExtending<T, U> {
     @SafeVarargs
@@ -62,7 +61,7 @@ public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatc
                 try {
                     checker.subcheck().name(valueName).value(extract(item)).runMatchersObject(matchersObject);
                 } catch (Exception e) {
-                    checker.subcheck().name(valueName).extractionStatus(extractionError(e));
+                    checker.subcheck().name(valueName).extractionStatus(BROKEN).extractionException(e);
                 }
             }
         }

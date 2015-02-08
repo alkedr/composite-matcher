@@ -32,8 +32,10 @@ public class HtmlReporterTest {
             strings.add(RandomStringUtils.randomAlphanumeric(10));
         }
         System.out.println("strings are generated");
+        System.gc();
         ReportingMatcher.ExecutedCompositeCheck report = new ClassifyingMatcher().items(any(String.class), 1000000).getReport(strings);
         System.out.println("report is built");
+        System.gc();
         String s = new HtmlWithJsonReporter().report(report);
         System.out.println("html size " + s.length());
         System.gc();

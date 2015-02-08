@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.StringDescription.asString;
 
 // добавить возможность настройки отображения элементов (номер, item.toString, и т. п.)
 public class ClassifyingMatcher<T> extends ReportingMatcher<Iterable<T>> {
@@ -58,13 +59,13 @@ public class ClassifyingMatcher<T> extends ReportingMatcher<Iterable<T>> {
             }
         }
 
-//        for (CheckInProgress<T> checkInProgress : checksInProgress) {
-//            ExecutedCompositeCheckBuilder checkerForGroup = checker.createCompositeCheck(asString(checkInProgress.valueMatcher), null, ExtractionStatus.NORMAL, null);
-//            checkerForGroup.createCompositeCheck("count", checkInProgress.matchedItems.size(), ExtractionStatus.NORMAL, null).runMatcher(checkInProgress.countMatcher);
-//            for (Object matchedItem : checkInProgress.matchedItems) {
-//                checkerForGroup.createCompositeCheck(null, matchedItem, ExtractionStatus.NORMAL, null);
-//            }
-//        }
+        for (CheckInProgress<T> checkInProgress : checksInProgress) {
+            ExecutedCompositeCheckBuilder checkerForGroup = checker.subcheck().name(asString(checkInProgress.valueMatcher)).value(null);
+            checkerForGroup.subcheck().name("count").value(checkInProgress.matchedItems.size()).runMatcher(checkInProgress.countMatcher);
+            for (Object matchedItem : checkInProgress.matchedItems) {
+                checkerForGroup.subcheck().value(matchedItem);
+            }
+        }
     }
 
 

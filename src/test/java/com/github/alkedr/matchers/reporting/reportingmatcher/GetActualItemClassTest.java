@@ -1,11 +1,12 @@
-package com.github.alkedr.matchers.reporting;
+package com.github.alkedr.matchers.reporting.reportingmatcher;
 
+import com.github.alkedr.matchers.reporting.ReportingMatcher;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import static org.junit.Assert.assertSame;
 
-public class ReportingMatcherGetActualItemClassTest {
+public class GetActualItemClassTest {
     @Test
     public void simple() {
         assertSame(new NoOpReportingMatcherForNumber().getActualItemClass(), Number.class);

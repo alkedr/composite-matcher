@@ -5,7 +5,7 @@ import com.github.alkedr.matchers.reporting.ReportingMatcher;
 import java.io.StringWriter;
 import java.util.Scanner;
 
-import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExtractionStatus.NORMAL;
+import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedCompositeCheck.ExtractionStatus.*;
 
 /**
  * User: alkedr
@@ -48,9 +48,9 @@ public class HtmlWithJsonReporter implements Reporter {
             w.write(",es:");
             w.write(String.valueOf(check.getStatus().ordinal()));
         }
-        if (check.getExtractionStatus().getException() != null) {
+        if (check.getExtractionException() != null) {
             w.write(",ee:");
-            writeJavaScriptStringLiteral(String.valueOf(check.getExtractionStatus().getException()), w);
+            writeJavaScriptStringLiteral(String.valueOf(check.getExtractionException()), w);
         }
         if (!check.getSimpleChecks().isEmpty()) {
             w.write(",sc:[");

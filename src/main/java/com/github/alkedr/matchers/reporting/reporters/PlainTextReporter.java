@@ -4,6 +4,8 @@ import com.github.alkedr.matchers.reporting.ReportingMatcher;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.Nullable;
 
+import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedCompositeCheck.ExtractionStatus.*;
+
 // TODO: report getExtractedValue().getException()
 public class PlainTextReporter implements Reporter {
     @Nullable private Matcher<ReportingMatcher.ExecutedCheck> checkMatcher = null;
@@ -25,7 +27,7 @@ public class PlainTextReporter implements Reporter {
     }
 
     private static String generateStatusNameValueString(ReportingMatcher.ExecutedCompositeCheck check) {
-        return (check.getExtractionStatus() == ReportingMatcher.ExtractionStatus.NORMAL ? "" : check.getExtractionStatus().toString().toLowerCase() + " ") +
+        return (check.getExtractionStatus() == NORMAL ? "" : check.getExtractionStatus().toString().toLowerCase() + " ") +
                 check.getStatus().toString().toLowerCase() + " " +
                 check.getName() + ":" +
                 (check.getCompositeChecks().isEmpty() ? " " + check.getValue() : "") + "\n";
