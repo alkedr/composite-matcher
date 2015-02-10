@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedCheck.Status.FAILED;
 import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedCheck.Status.PASSED;
 import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedCheck.Status.UNCHECKED;
 import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedCompositeCheck.ExtractionStatus.NORMAL;
@@ -154,9 +155,13 @@ public final class ReportMatchers {
 
 
     public static Matcher<ReportingMatcher.ExecutedSimpleCheck> simpleCheck(String matcherDescription) {
+        return simpleCheck(matcherDescription, null);
+    }
+
+    public static Matcher<ReportingMatcher.ExecutedSimpleCheck> simpleCheck(String matcherDescription, String mismatchDescription) {
         return allOf(
                 matcherDescription(matcherDescription),
-                mismatchDescription(null),
+                mismatchDescription(mismatchDescription),
                 matchesException(null),
                 describeToException(null),
                 describeMismatchException(null)
@@ -179,13 +184,18 @@ public final class ReportMatchers {
     }
 
     @SafeVarargs
+    public static Matcher<ReportingMatcher.ExecutedCompositeCheck> uncheckedCompositeCheck(String name, Object value, Matcher<ReportingMatcher.ExecutedCompositeCheck>... matchers) {
+        return compositeCheck(name, value, UNCHECKED, matchers);
+    }
+
+    @SafeVarargs
     public static Matcher<ReportingMatcher.ExecutedCompositeCheck> passedCompositeCheck(String name, Object value, Matcher<ReportingMatcher.ExecutedCompositeCheck>... matchers) {
         return compositeCheck(name, value, PASSED, matchers);
     }
 
     @SafeVarargs
-    public static Matcher<ReportingMatcher.ExecutedCompositeCheck> uncheckedCompositeCheck(String name, Object value, Matcher<ReportingMatcher.ExecutedCompositeCheck>... matchers) {
-        return compositeCheck(name, value, UNCHECKED, matchers);
+    public static Matcher<ReportingMatcher.ExecutedCompositeCheck> failedCompositeCheck(String name, Object value, Matcher<ReportingMatcher.ExecutedCompositeCheck>... matchers) {
+        return compositeCheck(name, value, FAILED, matchers);
     }
 
     @SafeVarargs

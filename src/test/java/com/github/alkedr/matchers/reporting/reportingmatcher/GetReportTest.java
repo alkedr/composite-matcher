@@ -15,8 +15,9 @@ import static org.junit.Assert.assertThat;
  * Date: 04.02.2015
  */
 public class GetReportTest {
-    private static final Object item = new Object();
-    private static final Object extractedItem = new Object();
+    private static final Integer item = 1;
+    private static final Integer extractedItem = 42;
+    private static final String itemOfWrongClass = "blah";
 
     @Test
     public void reportIsEmpty() {
@@ -50,8 +51,8 @@ public class GetReportTest {
                         simpleChecks(empty()),
                         compositeChecks(
                                 passedCompositeCheck(null, extractedItem,
-                                    simpleChecks(simpleCheck("ANYTHING")),
-                                    compositeChecks(empty())
+                                        simpleChecks(simpleCheck("ANYTHING")),
+                                        compositeChecks(empty())
                                 )
                         )
                 )
@@ -68,43 +69,54 @@ public class GetReportTest {
         );
     }
 
+    @Test
+    public void itemOfWrongClass() {
+        assertThat(new NoOpReportingMatcher().getReport(itemOfWrongClass),
+                failedCompositeCheck(null, itemOfWrongClass,
+                        simpleChecks(simpleCheck("is an instance of java.lang.Integer", "\"" + itemOfWrongClass + "\" is a java.lang.String")),
+                        compositeChecks(empty())
+                )
+        );
+    }
 
-    // TODO: передача объекта неправильного класса
+
     // TODO: ReportingMatcher со вложенным обычным матчером, который вызывает ReportingMatcher
     // TODO: отдельный тест на очистку глобальных переменных
     // TODO: отдельный тест на очистку глобальных переменных с исключениями?
+    // TODO: тест на многопоточность?
 
-    private static class NoOpReportingMatcher extends ReportingMatcher<Object> {
+    private static class NoOpReportingMatcher extends ReportingMatcher<Integer> {
         @Override
-        public void runChecks(@Nullable Object item, ExecutedCompositeCheckBuilder checker) {
+        public void runChecks(@Nullable Integer item, ExecutedCompositeCheckBuilder checker) {
         }
     }
 
-    private static class ReportingMatcherWithInnerSimpleMatcher extends ReportingMatcher<Object> {
+    private static class ReportingMatcherWithInnerSimpleMatcher extends ReportingMatcher<Integer> {
         @Override
-        public void runChecks(@Nullable Object item, ExecutedCompositeCheckBuilder checker) {
+        public void runChecks(@Nullable Integer item, ExecutedCompositeCheckBuilder checker) {
             checker.runMatcher(anything());
         }
     }
 
-    private static class ReportingMatcherWithInnerNoOpReportingMatcher extends ReportingMatcher<Object> {
+    private static class ReportingMatcherWithInnerNoOpReportingMatcher extends ReportingMatcher<Integer> {
         @Override
-        public void runChecks(@Nullable Object item, ExecutedCompositeCheckBuilder checker) {
+        public void runChecks(@Nullable Integer item, ExecutedCompositeCheckBuilder checker) {
             checker.subcheck().value(extractedItem).runMatcher(new NoOpReportingMatcher());
         }
     }
 
-    private static class ReportingMatcherWithInnerReportingMatcherWithInnerSimpleMatcher extends ReportingMatcher<Object> {
+    private static class ReportingMatcherWithInnerReportingMatcherWithInnerSimpleMatcher extends ReportingMatcher<Integer> {
         @Override
-        public void runChecks(@Nullable Object item, ExecutedCompositeCheckBuilder checker) {
+        public void runChecks(@Nullable Integer item, ExecutedCompositeCheckBuilder checker) {
             checker.subcheck().value(extractedItem).runMatcher(new ReportingMatcherWithInnerSimpleMatcher());
         }
     }
 
-    private static class ReportingMatcherWithInnerNoOpReportingMatcherWithDecorator extends ReportingMatcher<Object> {
+    private static class ReportingMatcherWithInnerNoOpReportingMatcherWithDecorator extends ReportingMatcher<Integer> {
         @Override
-        public void runChecks(@Nullable Object item, ExecutedCompositeCheckBuilder checker) {
+        public void runChecks(@Nullable Integer item, ExecutedCompositeCheckBuilder checker) {
             checker.subcheck().value(extractedItem).runMatcher(describedAs("description", new NoOpReportingMatcher()));
         }
     }
+
 }
