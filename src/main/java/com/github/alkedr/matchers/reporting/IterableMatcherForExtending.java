@@ -1,6 +1,5 @@
 package com.github.alkedr.matchers.reporting;
 
-import ch.lambdaj.function.matcher.Predicate;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +17,7 @@ public class IterableMatcherForExtending<T, U extends IterableMatcherForExtendin
 
 
     public IterableMatcherForExtending(Type type) {
+        super(Iterable.class);
         this.type = type;
     }
 
@@ -70,23 +70,23 @@ public class IterableMatcherForExtending<T, U extends IterableMatcherForExtendin
     }
 
 
-    public U items(final int index, final Matcher<? super Integer> countMatcher, Matcher<? super T>... matchers) {
-        return items(new Predicate<Integer>() {
-            @Override
-            public boolean apply(Integer item) {
-                return (item >= index) && (countMatcher.matches(item - index + 1));
-            }
-        }, matchers);
-    }
-
-    public U items(final int index, final Matcher<? super Integer> countMatcher, Collection<? extends Matcher<? super T>> matchers) {
-        return items(new Predicate<Integer>() {
-            @Override
-            public boolean apply(Integer item) {
-                return (item >= index) && (countMatcher.matches(item - index + 1));
-            }
-        }, matchers);
-    }
+//    public U items(final int index, final Matcher<? super Integer> countMatcher, Matcher<? super T>... matchers) {
+//        return items(new Predicate<Integer>() {
+//            @Override
+//            public boolean apply(Integer item) {
+//                return (item >= index) && (countMatcher.matches(item - index + 1));
+//            }
+//        }, matchers);
+//    }
+//
+//    public U items(final int index, final Matcher<? super Integer> countMatcher, Collection<? extends Matcher<? super T>> matchers) {
+//        return items(new Predicate<Integer>() {
+//            @Override
+//            public boolean apply(Integer item) {
+//                return (item >= index) && (countMatcher.matches(item - index + 1));
+//            }
+//        }, matchers);
+//    }
 
 
     public U items(Matcher<Integer> indexMatcher, Matcher<? super T>... matchers) {

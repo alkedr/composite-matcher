@@ -11,7 +11,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-import static ch.lambdaj.Lambda.on;
 import static org.hamcrest.Matchers.any;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -53,7 +52,7 @@ public class HtmlReporterTest {
 
 
     private static ReportingMatcher<VeryComplexBean> veryComplexBeanMatcher() {
-        return new ObjectMatcher<VeryComplexBean>()
+        return new ObjectMatcher<>(VeryComplexBean.class)
                 .field("correctField").is(correctComplexBean())
                 .field("incorrectField").is(incorrectComplexBean())
                 .field("uncheckedField").is(correctComplexBean())
@@ -69,23 +68,22 @@ public class HtmlReporterTest {
     }
 
     private static Matcher<ComplexBean> complexBean(String expectedStringPropertyValue) {
-        ComplexBean on = on(ComplexBean.class);
-        return new ObjectMatcher<ComplexBean>()
-                .property(on.isBooleanField()).is(equalTo(false))
-                .property(on.getIntField()).is(equalTo(1))
-                .property(on.getLongField()).is(equalTo(2L))
-                .property(on.getStringField()).is(equalTo(expectedStringPropertyValue))
-                ;
+        ObjectMatcher<ComplexBean> r = new ObjectMatcher<>(ComplexBean.class);
+        r.expect(equalTo(false)).isBooleanField();
+        r.expect(equalTo(1)).getIntField();
+        r.expect(equalTo(2L)).getLongField();
+        r.expect(equalTo(expectedStringPropertyValue)).getStringField();
+        return r;
     }
 
-    private static class VeryComplexBean {
+    public static class VeryComplexBean {
         private final ComplexBean correctField = new ComplexBean();
         private final ComplexBean incorrectField = new ComplexBean();
         private final ComplexBean uncheckedField = new ComplexBean();
         private final Map<Object, String> map = new HashMap<>();
         private final List<Double> list = new ArrayList<>();
 
-        private VeryComplexBean() {
+        public VeryComplexBean() {
             map.put(1, "123");
             map.put(22, "4321");
             list.add(2.34);
@@ -93,7 +91,7 @@ public class HtmlReporterTest {
         }
     }
 
-    private static class ComplexBean {
+    public static class ComplexBean {
         private final boolean booleanField = false;
         private final int intField = 1;
         private final Long longField = 2L;

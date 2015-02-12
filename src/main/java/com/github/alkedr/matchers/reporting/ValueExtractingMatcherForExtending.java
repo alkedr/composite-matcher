@@ -6,9 +6,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedCompositeCheck.ExtractionStatus.*;
+import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedCompositeCheck.ExtractionStatus.BROKEN;
+import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedCompositeCheck.ExtractionStatus.MISSING;
 
 public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatcherForExtending<T, U>> extends PlanningMatcherForExtending<T, U> {
+    public ValueExtractingMatcherForExtending() {
+    }
+
+    public ValueExtractingMatcherForExtending(@NotNull Class<?> tClass) {
+        super(tClass);
+    }
+
     @SafeVarargs
     public final U it(final Matcher<? super T>... matchers) {
         return addPlannedCheck(new PlannedCheck<T>() {

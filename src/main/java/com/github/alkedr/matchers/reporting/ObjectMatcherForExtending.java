@@ -11,13 +11,16 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
 
-import static ch.lambdaj.Lambda.argument;
 import static org.apache.commons.lang3.reflect.FieldUtils.readField;
 import static org.apache.commons.lang3.reflect.MethodUtils.invokeMethod;
 
 // TODO: поддерживать вычисление выражений, например fieldX.methodY().listFieldZ.get(1) ?
 // TODO: поддерживать цепочки вызовов lambdaj  on(X.class).getX().getY()
 public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T, U>> extends ValueExtractingMatcherForExtending<T, U> {
+    public ObjectMatcherForExtending(@NotNull Class<?> tClass) {
+        super(tClass);
+    }
+
     public <V> ValueCheckAdder<V> field(String nameForReportAndExtraction) {
         return field(nameForReportAndExtraction, nameForReportAndExtraction);
     }
@@ -36,7 +39,9 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
         return (ValueCheckAdder<V>) valueCheckAdder;
     }
 
+    // TODO: getter (как method, только убирает из имени get)
 
+    // TODO: передавать матчеры вторым параметром
     public <V> ValueCheckAdder<V> method(String nameForReportAndExtraction, Object... arguments) {
         return method(nameForReportAndExtraction, nameForReportAndExtraction, arguments);
     }
@@ -57,16 +62,17 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
     }
 
 
-    public <V> ValueCheckAdder<V> property(V lambdajPlaceholder) {
-        return property(argument(lambdajPlaceholder).getInkvokedPropertyName(), lambdajPlaceholder);
-    }
-
-    public <V> ValueCheckAdder<V> property(String nameForReport, V lambdajPlaceholder) {
-        clear();
-        this.propertyNameForReport = nameForReport;
-        this.propertyLambdajPlaceholder = lambdajPlaceholder;
-        return (ValueCheckAdder<V>) valueCheckAdder;
-    }
+    // TODO: убрать property и зависимость от lambdaj
+//    public <V> ValueCheckAdder<V> property(V lambdajPlaceholder) {
+//        return property(argument(lambdajPlaceholder).getInkvokedPropertyName(), lambdajPlaceholder);
+//    }
+//
+//    public <V> ValueCheckAdder<V> property(String nameForReport, V lambdajPlaceholder) {
+//        clear();
+//        this.propertyNameForReport = nameForReport;
+//        this.propertyLambdajPlaceholder = lambdajPlaceholder;
+//        return (ValueCheckAdder<V>) valueCheckAdder;
+//    }
 
 
     public <V> T expect(Matcher<V>... matchers) {
@@ -131,17 +137,17 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
                 }
                 throw new IllegalStateException("methodNameForReport is not null but one of methodNameForExtraction and methodArguments and methodReturnValueExtractor are null");
             }
-            if (propertyNameForReport != null) {
-                if (propertyLambdajPlaceholder != null) {
-                    return new ValueExtractingPlannedCheck<T>(propertyNameForReport, matchers) {
-                        @Override
-                        public Object extract(@NotNull Object item) throws Exception {
-                            return argument(propertyLambdajPlaceholder).evaluate(item);
-                        }
-                    };
-                }
-                throw new IllegalStateException("propertyNameForReport is not null but propertyLambdajPlaceholder is null");
-            }
+//            if (propertyNameForReport != null) {
+//                if (propertyLambdajPlaceholder != null) {
+//                    return new ValueExtractingPlannedCheck<T>(propertyNameForReport, matchers) {
+//                        @Override
+//                        public Object extract(@NotNull Object item) throws Exception {
+//                            return argument(propertyLambdajPlaceholder).evaluate(item);
+//                        }
+//                    };
+//                }
+//                throw new IllegalStateException("propertyNameForReport is not null but propertyLambdajPlaceholder is null");
+//            }
             throw new IllegalStateException("fieldNameForReport, methodNameForReport and propertyNameForReport are null");
         }
     }

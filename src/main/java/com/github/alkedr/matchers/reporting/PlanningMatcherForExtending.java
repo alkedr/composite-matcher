@@ -9,6 +9,13 @@ import java.util.Collection;
 public class PlanningMatcherForExtending<T, U extends PlanningMatcherForExtending<T, U>> extends ReportingMatcher<T> {
     private final Collection<PlannedCheck<T>> plannedChecks = new ArrayList<>();
 
+    public PlanningMatcherForExtending() {
+    }
+
+    public PlanningMatcherForExtending(@NotNull Class<?> tClass) {
+        super(tClass);
+    }
+
     public U addPlannedCheck(PlannedCheck<T> plannedCheck) {
         plannedChecks.add(plannedCheck);
         return (U) this;
