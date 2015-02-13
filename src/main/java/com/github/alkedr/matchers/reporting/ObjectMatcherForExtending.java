@@ -3,15 +3,23 @@ package com.github.alkedr.matchers.reporting;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
+import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.lang3.Validate;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
 
+import static ch.lambdaj.Lambda.argument;
+import static ch.lambdaj.Lambda.join;
+import static java.util.Arrays.asList;
+import static org.apache.commons.lang3.reflect.FieldUtils.getField;
 import static org.apache.commons.lang3.reflect.FieldUtils.readField;
+import static org.apache.commons.lang3.reflect.MethodUtils.getMatchingAccessibleMethod;
 import static org.apache.commons.lang3.reflect.MethodUtils.invokeMethod;
 
 // TODO: поддерживать вычисление выражений, например fieldX.methodY().listFieldZ.get(1) ?
@@ -21,58 +29,205 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
         super(tClass);
     }
 
-    public <V> ValueCheckAdder<V> field(String nameForReportAndExtraction) {
-        return field(nameForReportAndExtraction, nameForReportAndExtraction);
+
+    public <V> U field(String nameForReportAndExtraction, Matcher<?>... matchers) {
+        return fieldWithMatchersObject(nameForReportAndExtraction, nameForReportAndExtraction, matchers);
     }
 
-    public <V> ValueCheckAdder<V> field(String nameForReport, String nameForExtraction) {
+    public <V> U field(String nameForReportAndExtraction, List<Matcher<?>> matchers) {
+        return fieldWithMatchersObject(nameForReportAndExtraction, nameForReportAndExtraction, matchers);
+    }
+
+
+    public <V> U field(String nameForReport, String nameForExtraction, Matcher<?>... matchers) {
+        return fieldWithMatchersObject(nameForReport, nameForExtraction, matchers);
+    }
+
+    public <V> U field(String nameForReport, String nameForExtraction, List<Matcher<?>> matchers) {
+        return fieldWithMatchersObject(nameForReport, nameForExtraction, matchers);
+    }
+
+
+    public <V> U field(Field field, Matcher<?>... matchers) {
+        return fieldWithMatchersObject(field.getName(), field, matchers);
+    }
+
+    public <V> U field(Field field, List<Matcher<?>> matchers) {
+        return fieldWithMatchersObject(field.getName(), field, matchers);
+    }
+
+
+    public <V> U field(String nameForReport, Field field, Matcher<?>... matchers) {
+        return fieldWithMatchersObject(nameForReport, field, matchers);
+    }
+
+    public <V> U field(String nameForReport, Field field, List<Matcher<?>> matchers) {
+        return fieldWithMatchersObject(nameForReport, field, matchers);
+    }
+
+
+
+    public <V> U method(String nameForReportAndExtraction, Matcher<?> matchers, Object... arguments) {
+        return methodWithMatchersObject(generateMethodNameForReport(nameForReportAndExtraction, arguments), nameForReportAndExtraction, matchers, arguments);
+    }
+
+    public <V> U method(String nameForReportAndExtraction, List<Matcher<?>> matchers, Object... arguments) {
+        return methodWithMatchersObject(generateMethodNameForReport(nameForReportAndExtraction, arguments), nameForReportAndExtraction, matchers, arguments);
+    }
+
+
+    public <V> U method(String nameForReport, String nameForExtraction, Matcher<?> matchers, Object... arguments) {
+        return methodWithMatchersObject(nameForReport, nameForExtraction, matchers, arguments);
+    }
+
+    public <V> U method(String nameForReport, String nameForExtraction, List<Matcher<?>> matchers, Object... arguments) {
+        return methodWithMatchersObject(nameForReport, nameForExtraction, matchers, arguments);
+    }
+
+
+
+    public <V> U method(Method method, Matcher<?> matchers, Object... arguments) {
+        return methodWithMatchersObject(generateMethodNameForReport(method.getName(), arguments), method, matchers, arguments);
+    }
+
+    public <V> U method(Method method, List<Matcher<?>> matchers, Object... arguments) {
+        return methodWithMatchersObject(generateMethodNameForReport(method.getName(), arguments), method, matchers, arguments);
+    }
+
+
+    public <V> U method(String nameForReport, Method method, Matcher<?> matchers, Object... arguments) {
+        return methodWithMatchersObject(nameForReport, method, matchers, arguments);
+    }
+
+    public <V> U method(String nameForReport, Method method, List<Matcher<?>> matchers, Object... arguments) {
+        return methodWithMatchersObject(nameForReport, method, matchers, arguments);
+    }
+
+
+
+    public <V> U getter(String nameForExtraction, Matcher<?>... matchers) {
+        return getter(nameForExtraction, asList(matchers));
+    }
+
+    public <V> U getter(String nameForExtraction, List<Matcher<?>> matchers) {
+        return method(generateGetterNameForReport(nameForExtraction), nameForExtraction, matchers);
+    }
+
+
+
+    public <V> U getter(Method method, Matcher<?>... matchers) {
+        return getter(nameForExtraction, asList(matchers));
+    }
+
+    public <V> U getter(Method method, List<Matcher<?>> matchers) {
+        return method(getterNameToNameForReport(nameForExtraction), nameForExtraction, matchers);
+    }
+
+
+
+    public <V> ValueCheckAdder<V> property(V lambdajPlaceholder) {
+        return property(argument(lambdajPlaceholder).getInkvokedPropertyName(), lambdajPlaceholder);
+    }
+
+    public <V> ValueCheckAdder<V> property(String nameForReport, V lambdajPlaceholder) {
         clear();
-        this.fieldNameForReport = nameForReport;
-        this.fieldNameForExtraction = nameForExtraction;
+        this.propertyNameForReport = nameForReport;
+        this.propertyLambdajPlaceholder = lambdajPlaceholder;
         return (ValueCheckAdder<V>) valueCheckAdder;
     }
 
-    public <V> ValueCheckAdder<V> field(String nameForReport, ValueExtractor<T> valueExtractor) {
-        clear();
-        this.fieldNameForReport = nameForReport;
-        this.fieldValueExtractor = valueExtractor;
-        return (ValueCheckAdder<V>) valueCheckAdder;
-    }
 
-    // TODO: getter (как method, только убирает из имени get)
-
-    // TODO: передавать матчеры вторым параметром
-    public <V> ValueCheckAdder<V> method(String nameForReportAndExtraction, Object... arguments) {
-        return method(nameForReportAndExtraction, nameForReportAndExtraction, arguments);
-    }
-
-    public <V> ValueCheckAdder<V> method(String nameForReport, String nameForExtraction, Object... arguments) {
-        clear();
-        this.methodNameForReport = nameForReport;
-        this.methodNameForExtraction = nameForExtraction;
-        this.methodArguments = arguments;
-        return (ValueCheckAdder<V>) valueCheckAdder;
-    }
-
-    public <V> ValueCheckAdder<V> method(String nameForReport, ValueExtractor<T> returnValueExtractor) {
-        clear();
-        this.methodNameForReport = nameForReport;
-        this.methodReturnValueExtractor = returnValueExtractor;
-        return (ValueCheckAdder<V>) valueCheckAdder;
-    }
-
-
-    // TODO: убрать property и зависимость от lambdaj
-//    public <V> ValueCheckAdder<V> property(V lambdajPlaceholder) {
-//        return property(argument(lambdajPlaceholder).getInkvokedPropertyName(), lambdajPlaceholder);
+    // Это должно быть в ValueExtractingMatcherForExtending
+//    public <V> U field(String nameForReport, ValueExtractor<T> valueExtractor, Matcher<?>... matchers) {
+//        return fieldWithMatchersObject(nameForReport, valueExtractor, matchers);
 //    }
 //
-//    public <V> ValueCheckAdder<V> property(String nameForReport, V lambdajPlaceholder) {
+//    public <V> U field(String nameForReport, ValueExtractor<T> valueExtractor, List<Matcher<?>> matchers) {
+//        return fieldWithMatchersObject(nameForReport, valueExtractor, matchers);
+//    }
+
+//    public <V> U field(ValueExtractor<NamedValue<T>> namedValueExtractor, Matcher<?>... matchers) {
+//        return fieldWithMatchersObject(namedValueExtractor, matchers);
+//    }
+//
+//    public <V> U field(ValueExtractor<NamedValue<T>> namedValueExtractor, List<Matcher<?>> matchers) {
+//        return fieldWithMatchersObject(namedValueExtractor, matchers);
+//    }
+
+//    public <V> ValueCheckAdder<V> method(String nameForReport, Matcher<?> matchers, ValueExtractor<T> returnValueExtractor) {
 //        clear();
-//        this.propertyNameForReport = nameForReport;
-//        this.propertyLambdajPlaceholder = lambdajPlaceholder;
+//        this.methodNameForReport = nameForReport;
+//        this.methodReturnValueExtractor = returnValueExtractor;
 //        return (ValueCheckAdder<V>) valueCheckAdder;
 //    }
+//
+//    public <V> ValueCheckAdder<V> method(String nameForReport, List<Matcher<?>> matchers, ValueExtractor<T> returnValueExtractor) {
+//        clear();
+//        this.methodNameForReport = nameForReport;
+//        this.methodReturnValueExtractor = returnValueExtractor;
+//        return (ValueCheckAdder<V>) valueCheckAdder;
+//    }
+
+//    public static class NamedValue<T> {
+//        private final String name;
+//        private final T value;
+//
+//        public NamedValue(String name, T value) {
+//            this.name = name;
+//            this.value = value;
+//        }
+//
+//        public String getName() {
+//            return name;
+//        }
+//
+//        public T getValue() {
+//            return value;
+//        }
+//    }
+
+
+
+
+
+
+    private U fieldWithMatchersObject(String nameForReport, String nameForExtraction, Object matchers) {
+        Field field = getField(getActualItemClass(), nameForExtraction, true);
+        Validate.isTrue(field != null, "Field %s is not found", nameForExtraction);
+        return fieldWithMatchersObject(nameForReport, field, matchers);
+    }
+
+    private U fieldWithMatchersObject(String nameForReport, final Field field, Object matchers) {
+        return addPlannedCheck(new ValueExtractingPlannedCheck<T>(nameForReport, matchers) {
+            @Override
+            public Object extract(@NotNull T item) throws Exception {
+                return readField(field, item, true);
+            }
+        });
+    }
+
+    private U methodWithMatchersObject(String nameForReport, String nameForExtraction, Object matchers, Object... arguments) {
+        Method method = getMatchingAccessibleMethod(getActualItemClass(), nameForExtraction, ClassUtils.toClass(arguments));
+        Validate.isTrue(method != null, "Method %s with parameter classes %s is not found", nameForExtraction, join(asList(arguments), ", "));
+        return methodWithMatchersObject(nameForReport, method, matchers);
+    }
+
+    private U methodWithMatchersObject(String nameForReport, final Method method, Object matchers, final Object... arguments) {
+        return addPlannedCheck(new ValueExtractingPlannedCheck<T>(nameForReport, matchers) {
+            @Override
+            public Object extract(@NotNull Object item) throws Exception {
+                method.setAccessible(true);
+                return method.invoke(item, arguments);
+            }
+        });
+    }
+
+
+    private String getterNameToNameForReport(String nameForExtraction) {
+
+    }
+
+
 
 
     public <V> T expect(Matcher<V>... matchers) {
