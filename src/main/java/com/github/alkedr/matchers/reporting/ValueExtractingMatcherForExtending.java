@@ -53,11 +53,34 @@ public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatc
 
 
     public abstract static class ValueExtractingPlannedCheck<T> implements PlannedCheck<T> {
-        private final String valueName;
-        private final Object matchersObject;
+        private String valueName = null;
+        private Object matchersObject = null;
+
+        protected ValueExtractingPlannedCheck() {
+        }
+
+        protected ValueExtractingPlannedCheck(String valueName) {
+            this.valueName = valueName;
+        }
 
         protected ValueExtractingPlannedCheck(String valueName, Object matchersObject) {
             this.valueName = valueName;
+            this.matchersObject = matchersObject;
+        }
+
+        public String getValueName() {
+            return valueName;
+        }
+
+        public void setValueName(String valueName) {
+            this.valueName = valueName;
+        }
+
+        public Object getMatchersObject() {
+            return matchersObject;
+        }
+
+        public void setMatchersObject(Object matchersObject) {
             this.matchersObject = matchersObject;
         }
 
@@ -67,7 +90,8 @@ public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatc
                 checker.subcheck().name(valueName).extractionStatus(MISSING);
             } else {
                 try {
-                    checker.subcheck().name(valueName).value(extract(item)).runMatchersObject(matchersObject);
+                    // value(extract(item)) call must be first because extract() can change valueName
+                    checker.subcheck().value(extract(item)).name(valueName).runMatchersObject(matchersObject);
                 } catch (Exception e) {
                     checker.subcheck().name(valueName).extractionStatus(BROKEN).extractionException(e);
                 }

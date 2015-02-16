@@ -24,129 +24,109 @@ public class ObjectMatcherTest {
         }
     }
 
-    private static final Item item = new Item();
+    private static final Item ITEM = new Item();
 
+
+
+    private static void check(ObjectMatcher<Item> matcher, String valueName) {
+        assertThat(matcher.getReport(ITEM),
+                passedCompositeCheck(null, ITEM,
+                        simpleChecks(empty()),
+                        compositeChecks(
+                                passedCompositeCheck(valueName, ITEM.publicIntField,
+                                        simpleChecks(simpleCheck("<1>")),
+                                        compositeChecks(empty())
+                                )
+                        )
+                )
+        );
+    }
 
 
     @Test
     public void field() {
-        assertThat(new ObjectMatcher<>(Item.class).field("publicIntField").is(equalTo(1)).getReport(item),
-                passedCompositeCheck(null, item,
-                        simpleChecks(empty()),
-                        compositeChecks(
-                                passedCompositeCheck("publicIntField", item.publicIntField,
-                                        simpleChecks(simpleCheck("<1>")),
-                                        compositeChecks(empty())
-                                )
-                        )
-                )
-        );
+        check(new ObjectMatcher<>(Item.class).field("publicIntField").is(equalTo(1)), "publicIntField");
     }
 
     @Test
     public void fieldWithName() {
-        assertThat(new ObjectMatcher<>(Item.class).field("blah", "publicIntField").is(equalTo(1)).getReport(item),
-                passedCompositeCheck(null, item,
-                        simpleChecks(empty()),
-                        compositeChecks(
-                                passedCompositeCheck("blah", item.publicIntField,
-                                        simpleChecks(simpleCheck("<1>")),
-                                        compositeChecks(empty())
-                                )
-                        )
-                )
-        );
+        check(new ObjectMatcher<>(Item.class).field("blah", "publicIntField").is(equalTo(1)), "blah");
     }
 
     @Test
     public void fieldExtractor() {
-        assertThat(new ObjectMatcher<>(Item.class).field("blah",
-                        new ValueExtractingMatcherForExtending.ValueExtractor<Item>() {
-                            @Override
-                            public Object extract(@NotNull Item item) throws Exception {
-                                return item.publicIntField;
-                            }
-                        }
-                ).is(equalTo(1)).getReport(item),
-                passedCompositeCheck(null, item,
-                        simpleChecks(empty()),
-                        compositeChecks(
-                                passedCompositeCheck("blah", item.publicIntField,
-                                        simpleChecks(simpleCheck("<1>")),
-                                        compositeChecks(empty())
-                                )
-                        )
-                )
-        );
+        check(new ObjectMatcher<>(Item.class).field("blah",
+                new ValueExtractingMatcherForExtending.ValueExtractor<Item>() {
+                    @Override
+                    public Object extract(@NotNull Item item) {
+                        return item.publicIntField;
+                    }
+                }
+        ).is(equalTo(1)), "blah");
     }
+
+    // TODO: field(Field), field(name, Field)
+    // TODO: несуществующее поле
+    // TODO: private поле
+    // TODO: private поле private inner класса
+    // TODO: static поле
+
+
 
     @Test
     public void method() {
-        assertThat(new ObjectMatcher<>(Item.class).method("getPublicIntField").is(equalTo(1)).getReport(item),
-                passedCompositeCheck(null, item,
-                        simpleChecks(empty()),
-                        compositeChecks(
-                                passedCompositeCheck("getPublicIntField", item.publicIntField,
-                                        simpleChecks(simpleCheck("<1>")),
-                                        compositeChecks(empty())
-                                )
-                        )
-                )
-        );
+        check(new ObjectMatcher<>(Item.class).method("getPublicIntField").is(equalTo(1)), "getPublicIntField()");
     }
 
     @Test
     public void methodWithName() {
-        assertThat(new ObjectMatcher<>(Item.class).method("blah", "getPublicIntField").is(equalTo(1)).getReport(item),
-                passedCompositeCheck(null, item,
-                        simpleChecks(empty()),
-                        compositeChecks(
-                                passedCompositeCheck("blah", item.publicIntField,
-                                        simpleChecks(simpleCheck("<1>")),
-                                        compositeChecks(empty())
-                                )
-                        )
-                )
-        );
+        check(new ObjectMatcher<>(Item.class).method("blah", "getPublicIntField").is(equalTo(1)), "blah");
     }
 
     @Test
     public void methodExtractor() {
-        assertThat(new ObjectMatcher<>(Item.class).method("blah",
-                        new ValueExtractingMatcherForExtending.ValueExtractor<Item>() {
-                            @Override
-                            public Object extract(@NotNull Item item) throws Exception {
-                                return item.getPublicIntField();
-                            }
-                        }
-                ).is(equalTo(1)).getReport(item),
-                passedCompositeCheck(null, item,
-                        simpleChecks(empty()),
-                        compositeChecks(
-                                passedCompositeCheck("blah", item.publicIntField,
-                                        simpleChecks(simpleCheck("<1>")),
-                                        compositeChecks(empty())
-                                )
-                        )
-                )
-        );
+        check(new ObjectMatcher<>(Item.class).method(
+                new ValueExtractingMatcherForExtending.ValueExtractor<Item>() {
+                    @Override
+                    public Object extract(@NotNull Item item) {
+                        return item.getPublicIntField();
+                    }
+                }
+        ).is(equalTo(1)), "getPublicIntField()");
     }
+
+    @Test
+    public void methodExtractorWithName() {
+        check(new ObjectMatcher<>(Item.class).method("blah",
+                new ValueExtractingMatcherForExtending.ValueExtractor<Item>() {
+                    @Override
+                    public Object extract(@NotNull Item item) {
+                        return item.getPublicIntField();
+                    }
+                }
+        ).is(equalTo(1)), "blah");
+    }
+
+    // TODO: method(Method), method(name, Method)
+    // TODO: несуществующий метод
+    // TODO: private метод
+    // TODO: private метод private inner класса
+    // TODO: static метод
+
+
 
     @Test
     public void expect() {
         ObjectMatcher<Item> matcher = new ObjectMatcher<>(Item.class);
         matcher.expect(equalTo(1)).getPublicIntField();
-        assertThat(matcher.getReport(item),
-                passedCompositeCheck(null, item,
-                        simpleChecks(empty()),
-                        compositeChecks(
-                                passedCompositeCheck("getPublicIntField", item.publicIntField,
-                                        simpleChecks(simpleCheck("<1>")),
-                                        compositeChecks(empty())
-                                )
-                        )
-                )
-        );
+        check(matcher, "getPublicIntField");
     }
+
+    // TODO: тесты на некорректное использование expect()
+    // TODO: примитиный тип
+
+    // TODO: property()
+    // TODO: property(null)
+    // TODO: property(пропертя от другого класса)
 
 }
