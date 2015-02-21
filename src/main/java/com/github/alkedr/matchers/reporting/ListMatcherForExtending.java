@@ -4,4 +4,6 @@ public class ListMatcherForExtending<T, U extends ListMatcherForExtending<T, U>>
     public ListMatcherForExtending(Type type) {
         super(type);
     }
+
+    // TODO: возможность считать ошибкой лишние значения
 }
