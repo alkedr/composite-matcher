@@ -8,15 +8,17 @@ import java.util.Collection;
 
 import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedCompositeCheck.ExtractionStatus.BROKEN;
 import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedCompositeCheck.ExtractionStatus.MISSING;
+import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedCompositeCheck.ExtractionStatus.UNEXPECTED;
 
 public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatcherForExtending<T, U>> extends PlanningMatcherForExtending<T, U> {
-    public ValueExtractingMatcherForExtending() {
-    }
+//    public ValueExtractingMatcherForExtending() {
+//    }
 
     public ValueExtractingMatcherForExtending(@NotNull Class<?> tClass) {
         super(tClass);
     }
 
+    // TODO: Заменить это на аналог allOf()
     @SafeVarargs
     public final U it(final Matcher<? super T>... matchers) {
         return addPlannedCheck(new PlannedCheck<T>() {
@@ -27,7 +29,7 @@ public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatc
         });
     }
 
-    public U it(final Collection<? extends Matcher<? super T>> matchers) {
+    public U it(final Iterable<? extends Matcher<? super T>> matchers) {
         return addPlannedCheck(new PlannedCheck<T>() {
             @Override
             public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
@@ -39,25 +41,67 @@ public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatc
 
     @SafeVarargs
     public final <V> U value(String name, ValueExtractor<T> valueExtractor, Matcher<? super V>... matchers) {
-        return addPlannedCheck(valueExtractingPlannedCheckFromValueExtractor(name, valueExtractor, matchers));
+        return valueImpl(name, valueExtractor, matchers);
     }
 
     public <V> U value(String name, ValueExtractor<T> valueExtractor, Collection<? extends Matcher<? super V>> matchers) {
-        return addPlannedCheck(valueExtractingPlannedCheckFromValueExtractor(name, valueExtractor, matchers));
+        return valueImpl(name, valueExtractor, matchers);
     }
+
 
 
     public interface ValueExtractor<T> {
         Object extract(@NotNull T item) throws Exception;
     }
 
+    public interface UncheckedValuesAdder {
+        void add(String name, Object value);
+    }
 
-    public abstract static class ValueExtractingPlannedCheck<T> implements PlannedCheck<T> {
-        private String valueName = null;
-        private Object matchersObject = null;
 
-        protected ValueExtractingPlannedCheck() {
+    public interface ValueExtractingCheckExtractor<T> {
+        void extract(Collection<ValueExtractingCheck<T>> storage);
+    }
+
+    public abstract static class ValueExtractingCheck<T> implements ValueExtractingCheckExtractor<T> {
+        @Nullable PlannedCheck<T> next = null;
+
+        public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
+            ExecutedCompositeCheckBuilder subcheck = checker.subcheck().name(getName());
+            try {
+                if (item == null || isMissing(item)) {
+                    subcheck.extractionStatus(MISSING);
+                } else {
+                    if (isUnexpected(item)) subcheck.extractionStatus(UNEXPECTED);
+                    subcheck.value(getValue(item));
+                }
+            } catch (Exception e) {
+                subcheck.extractionStatus(BROKEN).extractionException(e);
+            }
+//            subcheck.runMatchersObject(matchersObject);
         }
+
+        protected boolean isMissing(@NotNull T item) throws Exception {
+            return false;
+        }
+
+        protected boolean isUnexpected(@Nullable T item) throws Exception {
+            return false;
+        }
+
+        protected abstract String getName();
+
+        protected abstract Object getValue(@NotNull T item) throws Exception;
+
+        public void extract(Collection<ValueExtractingCheck<T>> storage) {
+        }
+    }
+
+
+
+    public abstract static class ValueExtractingPlannedCheck<T> extends PlannedCheck<T> {
+        private final String valueName;
+        private Object matchersObject = null;
 
         protected ValueExtractingPlannedCheck(String valueName) {
             this.valueName = valueName;
@@ -66,14 +110,6 @@ public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatc
         protected ValueExtractingPlannedCheck(String valueName, Object matchersObject) {
             this.valueName = valueName;
             this.matchersObject = matchersObject;
-        }
-
-        public String getValueName() {
-            return valueName;
-        }
-
-        public void setValueName(String valueName) {
-            this.valueName = valueName;
         }
 
         public Object getMatchersObject() {
@@ -86,27 +122,37 @@ public class ValueExtractingMatcherForExtending<T, U extends ValueExtractingMatc
 
         @Override
         public void execute(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ExecutedCompositeCheckBuilder checker) {
-            if (item == null) {
-                checker.subcheck().name(valueName).extractionStatus(MISSING);
-            } else {
-                try {
-                    // value(extract(item)) call must be first because extract() can change valueName
-                    checker.subcheck().value(extract(item)).name(valueName).runMatchersObject(matchersObject);
-                } catch (Exception e) {
-                    checker.subcheck().name(valueName).extractionStatus(BROKEN).extractionException(e);
+            ExecutedCompositeCheckBuilder subcheck = checker.subcheck().name(valueName);
+            try {
+                if (item == null || isMissing(item)) {
+                    subcheck.extractionStatus(MISSING);
+                } else {
+                    if (isUnexpected(item)) subcheck.extractionStatus(UNEXPECTED);
+                    subcheck.value(getValue(item));
                 }
+            } catch (Exception e) {
+                subcheck.extractionStatus(BROKEN).extractionException(e);
             }
+            subcheck.runMatchersObject(matchersObject);
         }
 
-        public abstract Object extract(@NotNull T item) throws Exception;
+        protected boolean isMissing(@NotNull T item) throws Exception {
+            return false;
+        }
+
+        protected boolean isUnexpected(@Nullable T item) throws Exception {
+            return false;
+        }
+
+        protected abstract Object getValue(@NotNull T item) throws Exception;
     }
 
-    public static <T> ValueExtractingPlannedCheck<T> valueExtractingPlannedCheckFromValueExtractor(String valueName, final ValueExtractor<T> valueExtractor, Object matchersObject) {
-        return new ValueExtractingPlannedCheck<T>(valueName, matchersObject) {
+    private U valueImpl(String valueName, final ValueExtractor<T> valueExtractor, Object matchersObject) {
+        return addPlannedCheck(new ValueExtractingPlannedCheck<T>(valueName, matchersObject) {
             @Override
-            public Object extract(@NotNull T item) throws Exception {
+            public Object getValue(@NotNull T item) throws Exception {
                 return valueExtractor.extract(item);
             }
-        };
+        });
     }
 }

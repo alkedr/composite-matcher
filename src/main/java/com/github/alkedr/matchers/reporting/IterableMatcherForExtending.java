@@ -1,7 +1,6 @@
 package com.github.alkedr.matchers.reporting;
 
 import org.hamcrest.Matcher;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -101,14 +100,14 @@ public class IterableMatcherForExtending<T, U extends IterableMatcherForExtendin
 
 
 
-    @Override
-    public void runChecks(@Nullable Iterable<T> item, ExecutedCompositeCheckBuilder checker) {
-        super.runChecks(item, checker);
+//    @Override
+//    public void runChecks(@Nullable Iterable<T> item, ExecutedCompositeCheckBuilder checker) {
+//        super.runChecks(item, checker);
 //        switch (type) {
 //            case ORDERED: runChecksOrdered(item, checker); break;
 //            case UNORDERED: runChecksUnordered(item, checker); break;
 //        }
-    }
+//    }
 
 //    private void runChecksOrdered(Iterable<T> iterable, ExecutedCompositeCheckBuilder checker) {
 //        int i = 0;

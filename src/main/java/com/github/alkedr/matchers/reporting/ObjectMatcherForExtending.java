@@ -20,8 +20,107 @@ import static org.apache.commons.lang3.reflect.FieldUtils.getField;
 import static org.apache.commons.lang3.reflect.FieldUtils.readField;
 import static org.apache.commons.lang3.reflect.MethodUtils.getMatchingAccessibleMethod;
 
+/*
+    Экстракторы непроверенного
+        - должны передаваться матчерам для непроверенных значений
+        - матчеры непроверенных значений должны иметь возможность заоверрайдить их полностью или добавить правила для отдельных классов
+        - должны уметь работать с любыми классами (бины, списки, мапы, примитивные типы, строки)
+        - должны позволять добавление правил для отдельных классов (для случаев, когда у бина с геттерами есть поле-бин без геттеров)
+
+        UncheckedValuesExtractorsDispatcher - мапа Class -> UncheckedValuesExtractor
+        UncheckedValuesExtractor - вещи типа "все поля", "все методы", "все геттеры", "все элементы" и пр.,
+                                   возвращают мапу название -> значение в каком-то виде
+        UncheckedValuesFilter - вещи типа "игнорировать поле 'abc'"
+
+                                   У каждого UncheckedValuesExtractor'а ссылка на следующий
+                                   Применяем первый, если он не сработал, применяем второй и так далее
+ */
+
+// TODO: экстрактор - Field или Method + args
+
 // TODO: поддерживать вычисление выражений, например fieldX.methodY().listFieldZ.get(1) ?
 public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T, U>> extends ValueExtractingMatcherForExtending<T, U> {
+//    private AbstractPlannedCheck firstCheck = null;
+//    private AbstractPlannedCheck lastCheck = null;
+//    private Collection<AbstractPlannedFieldCheck> fieldChecks;
+//    private Collection<AbstractPlannedMethodCheck> methodChecks;
+
+
+//    public Iterable<AbstractPlannedCheck> getPlannedChecks() {
+//        Set
+//        ArrayList a;
+//        a.sort();
+//    }
+
+
+//    private abstract static class AbstractPlannedCheck {
+//        private Object matchersObject;
+//        private Check next;
+//
+//
+//        // addMatchersObject
+//
+//        // getMatchersObject
+//
+//        // getMatchers
+//
+//        // execute
+//
+//
+//        protected boolean isMissing(@NotNull T item) throws Exception {
+//            return false;
+//        }
+//
+//        protected boolean isUnexpected(@Nullable T item) throws Exception {
+//            return false;
+//        }
+//
+//        protected abstract Object getValue(@NotNull T item) throws Exception;
+//    }
+
+
+//    private abstract static class AbstractPlannedFieldCheck extends AbstractPlannedCheck {
+//        @Override
+//        protected Object getValue(@NotNull T item) throws Exception {
+//            return null;
+//        }
+//
+//        protected abstract Field getField();
+//    }
+//
+//
+//    private abstract static class AbstractPlannedMethodCheck extends AbstractPlannedCheck {
+//        @Override
+//        protected Object getValue(@NotNull T item) throws Exception {
+//            return null;
+//        }
+//
+//        protected abstract Method getMethod();
+//        protected abstract Object[] getArguments();
+//    }
+
+
+
+
+    public interface ValueExtractor<U extends ValueExtractor<U>> extends Comparable<U> {
+        Object extract(Object o);
+    }
+
+    public interface FieldExtractor extends ValueExtractor<FieldExtractor> {
+        Field getField();
+    }
+
+    public interface MethodExtractor extends ValueExtractor<MethodExtractor> {
+        Method getMethod();
+        Object[] getArguments();
+    }
+
+    public interface ArrayElementExtractor extends ValueExtractor<ArrayElementExtractor> {
+        int getIndex();
+    }
+
+
+
 
     public ObjectMatcherForExtending(@NotNull Class<?> tClass) {
         super(tClass);
@@ -45,16 +144,16 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
     public <V> ValueCheckAdder<V, U> field(String nameForReport, final Field field) {
         return new AbstractValueExtractingCheckAdder<V>(nameForReport) {
             @Override
-            public Object extract(@NotNull T item) throws IllegalAccessException {
+            public Object getValue(@NotNull T item) throws IllegalAccessException {
                 return readField(field, item, true);
             }
         };
     }
 
-    public <V> ValueCheckAdder<V, U> field(String nameForReport, final ValueExtractor<T> valueExtractor) {
+    public <V> ValueCheckAdder<V, U> field(String nameForReport, final ValueExtractor valueExtractor) {
         return new AbstractValueExtractingCheckAdder<V>(nameForReport) {
             @Override
-            public Object extract(@NotNull T item) throws Exception {
+            public Object getValue(@NotNull T item) throws Exception {
                 return valueExtractor.extract(item);
             }
         };
@@ -63,7 +162,11 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
 
 
     public <V> ValueCheckAdder<V, U> method(String nameForExtraction, Object... arguments) {
-        return method(generateMethodNameForReport(nameForExtraction, arguments), nameForExtraction, arguments);
+        return method(METHOD_NAME_FOR_REPORT, nameForExtraction, arguments);
+    }
+
+    private <V> ValueCheckAdder<V, U> method(MethodNameForReportGenerator methodNameForReportGenerator, String nameForExtraction, Object... arguments) {
+        return method(methodNameForReportGenerator.generateNameForReport(nameForExtraction, arguments), nameForExtraction, arguments);
     }
 
     public <V> ValueCheckAdder<V, U> method(String nameForReport, String nameForExtraction, Object... arguments) {
@@ -73,33 +176,31 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
     }
 
     public <V> ValueCheckAdder<V, U> method(Method method, Object... arguments) {
-        return method(generateMethodNameForReport(method.getName(), arguments), method, arguments);
+        return method(METHOD_NAME_FOR_REPORT, method, arguments);
+    }
+
+    private <V> ValueCheckAdder<V, U> method(MethodNameForReportGenerator methodNameForReportGenerator, Method method, Object... arguments) {
+        return method(methodNameForReportGenerator.generateNameForReport(method.getName(), arguments), method, arguments);
     }
 
     public <V> ValueCheckAdder<V, U> method(String nameForReport, final Method method, final Object... arguments) {
         return new AbstractValueExtractingCheckAdder<V>(nameForReport) {
             @Override
-            public Object extract(@NotNull T item) throws InvocationTargetException, IllegalAccessException {
+            public Object getValue(@NotNull T item) throws InvocationTargetException, IllegalAccessException {
                 method.setAccessible(true);
                 return method.invoke(item, arguments);
             }
         };
     }
 
-    public <V> ValueCheckAdder<V, U> method(final ValueExtractor<T> valueExtractor) {
-        return new AbstractValueExtractingCheckAdder<V>() {
-            @Override
-            public Object extract(@NotNull T item) throws Exception {
-                getProxyMethodInterceptor().initForMethodValueExtractor(item, this);
-                return valueExtractor.extract(getProxy());
-            }
-        };
+    public <V> ValueCheckAdder<V, U> method(ValueExtractor valueExtractor) {
+        return method(getMethodName(valueExtractor, METHOD_NAME_FOR_REPORT), valueExtractor);
     }
 
-    public <V> ValueCheckAdder<V, U> method(String nameForReport, final ValueExtractor<T> valueExtractor) {
+    public <V> ValueCheckAdder<V, U> method(String nameForReport, final ValueExtractor valueExtractor) {
         return new AbstractValueExtractingCheckAdder<V>(nameForReport) {
             @Override
-            public Object extract(@NotNull T item) throws Exception {
+            public Object getValue(@NotNull T item) throws Exception {
                 return valueExtractor.extract(item);
             }
         };
@@ -108,15 +209,15 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
 
 
     public <V> ValueCheckAdder<V, U> getter(String nameForExtraction) {
-        return method(generateGetterNameForReport(nameForExtraction), nameForExtraction, EMPTY_ARGUMENTS);
+        return method(GETTER_NAME_FOR_REPORT, nameForExtraction, EMPTY_ARGUMENTS);
     }
 
     public <V> ValueCheckAdder<V, U> getter(Method method) {
-        return method(generateGetterNameForReport(method.getName()), method, EMPTY_ARGUMENTS);
+        return method(GETTER_NAME_FOR_REPORT, method, EMPTY_ARGUMENTS);
     }
 
-    public <V> ValueCheckAdder<V, U> getter(ValueExtractor<T> valueExtractor) {
-        return method(valueExtractor);  // TODO: convert method name to property name (generateGetterNameForReport)
+    public <V> ValueCheckAdder<V, U> getter(ValueExtractor valueExtractor) {
+        return method(getMethodName(valueExtractor, GETTER_NAME_FOR_REPORT), valueExtractor);
     }
 
 
@@ -131,7 +232,7 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
     public <V> ValueCheckAdder<V, U> property(String nameForReport, final V lambdajPlaceholder) {
         return new AbstractValueExtractingCheckAdder<V>(nameForReport) {
             @Override
-            public Object extract(@NotNull T item) {
+            public Object getValue(@NotNull T item) {
                 return argument(lambdajPlaceholder).evaluate(item);
             }
         };
@@ -163,8 +264,6 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
 
 
     private abstract class AbstractValueExtractingCheckAdder<V> extends ValueExtractingPlannedCheck<T> implements ValueCheckAdder<V, U> {
-        private AbstractValueExtractingCheckAdder() {
-        }
 
         private AbstractValueExtractingCheckAdder(String valueName) {
             super(valueName);
@@ -191,7 +290,16 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
         }
 
 
+        // TODO: silent checks?
+
+
+//        public U isIgnored() {
+//            // для извлечения непроверенных значений
+//        }
+
+
         private U isImpl(Object newMatchersObject) {
+            // TODO: merge matcher objects
             if (getMatchersObject() != null) throw new IllegalStateException("Tried to call 'is' or 'returns' twice");
             setMatchersObject(newMatchersObject);
             return addPlannedCheck(this);
@@ -200,33 +308,50 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
 
 
 
-    private static String generateMethodNameForReport(String name, Object... arguments) {
-        return String.format("%s(%s)", name, join(arguments, ", "));
+    private interface MethodNameForReportGenerator {
+        String generateNameForReport(String methodName, Object... args);
     }
 
-    private static String generateGetterNameForReport(String nameForExtraction) {
-        if (nameForExtraction.length() > 2 && nameForExtraction.startsWith("is")) return nameForExtraction.substring(2, 3).toLowerCase() + nameForExtraction.substring(3);
-        if (nameForExtraction.length() > 3 && nameForExtraction.startsWith("get")) return nameForExtraction.substring(3, 4).toLowerCase() + nameForExtraction.substring(4);
-        return nameForExtraction;
-    }
+    private static final MethodNameForReportGenerator METHOD_NAME_FOR_REPORT = new MethodNameForReportGenerator() {
+        @Override
+        public String generateNameForReport(String methodName, Object... args) {
+            return String.format("%s(%s)", methodName, join(args, ", "));
+        }
+    };
 
+    private static final MethodNameForReportGenerator GETTER_NAME_FOR_REPORT = new MethodNameForReportGenerator() {
+        @Override
+        public String generateNameForReport(String methodName, Object... args) {
+            if (methodName.length() > 2 && methodName.startsWith("is")) return methodName.substring(2, 3).toLowerCase() + methodName.substring(3);
+            if (methodName.length() > 3 && methodName.startsWith("get")) return methodName.substring(3, 4).toLowerCase() + methodName.substring(4);
+            return methodName;
+        }
+    };
 
 
     private class ProxyMethodInterceptor implements MethodInterceptor {
         @Nullable private Object matchers = null;
-        @Nullable private Object actualObject = null;
-        @Nullable private ValueExtractingPlannedCheck<T> valueExtractingPlannedCheck = null;
+        @Nullable private Method method = null;
+        @Nullable private Object[] arguments = null;
 
         private void initForExpect(@NotNull Object newMatchers) {
             this.matchers = newMatchers;
-            this.actualObject = null;
-            this.valueExtractingPlannedCheck = null;
+            this.method = null;
         }
 
-        private void initForMethodValueExtractor(@Nullable Object newActualObject, @NotNull ValueExtractingPlannedCheck<T> newValueExtractingPlannedCheck) {
+        private void initForMethodValueExtractor() {
             this.matchers = null;
-            this.actualObject = newActualObject;
-            this.valueExtractingPlannedCheck = newValueExtractingPlannedCheck;
+            this.method = null;
+        }
+
+        @Nullable
+        public Method getMethod() {
+            return method;
+        }
+
+        @Nullable
+        public Object[] getArguments() {
+            return arguments;
         }
 
         @Override
@@ -234,18 +359,17 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
             if (matchers != null) {
                 addPlannedCheck(new ValueExtractingPlannedCheck<T>(method.getName(), matchers) {
                     @Override
-                    public Object extract(@NotNull Object item) throws InvocationTargetException, IllegalAccessException {
+                    public Object getValue(@NotNull Object item) throws InvocationTargetException, IllegalAccessException {
                         return method.invoke(item, args);
                     }
                 });
-            } else if (valueExtractingPlannedCheck != null) {
-                valueExtractingPlannedCheck.setValueName(generateMethodNameForReport(method.getName(), args));
+            } else {
+                if (this.method != null) throw new IllegalStateException("ValueExtractor вызвал два метода");
+                this.method = method;
+                arguments = args;
             }
-            Object returnValue = actualObject == null ? null : methodProxy.invoke(actualObject, args);  // FIXME: Что будет если примитивный тип?
             matchers = null;
-            actualObject = null;
-            valueExtractingPlannedCheck = null;
-            return returnValue;
+            return null; // FIXME: Что будет если примитивный тип?
         }
     }
 
@@ -262,6 +386,16 @@ public class ObjectMatcherForExtending<T, U extends ObjectMatcherForExtending<T,
             proxy = (T) enhancer.create();
         }
         return proxy;
+    }
+
+    private String getMethodName(ValueExtractor valueExtractor, MethodNameForReportGenerator generator) {
+        getProxyMethodInterceptor().initForMethodValueExtractor();
+        try {
+            valueExtractor.extract(getProxy());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return generator.generateNameForReport(getProxyMethodInterceptor().getMethod().getName(), getProxyMethodInterceptor().getArguments());
     }
 
 

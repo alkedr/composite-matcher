@@ -8,7 +8,6 @@ import org.hamcrest.StringDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,28 +18,44 @@ import static com.github.alkedr.matchers.reporting.ReportingMatcher.ExecutedComp
 import static org.hamcrest.Matchers.isA;
 
 public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
-    @NotNull private final Class<?> tClass;
+    @NotNull private final Class<?> actualItemClass;
     private ExecutedCompositeCheck lastReport = null;
 
-    protected ReportingMatcher() {
-        this.tClass = findClassOfT(getClass());
-    }
-
-    protected ReportingMatcher(@NotNull Class<?> tClass) {
-        this.tClass = tClass;
+    protected ReportingMatcher(@NotNull Class<?> actualItemClass) {
+        this.actualItemClass = actualItemClass;
     }
 
 
+    // В этом классе потому что все ReportingMatcher'ы извлекают значения, для которых нужен UncheckedValuesExtractor
+    public void uncheckedValuesExtractor(UncheckedValuesExtractor<T> extractor) {
+    }
+
+//    public void ignoreUncheckedMethod(ValueExtractor<T> valueExtractor) {
+//
+//    }
+//
+//    public void ignoreUncheckedGetter(ValueExtractor<T> valueExtractor) {
+//
+//    }
+
+    public void ignoreUncheckedValue(String name) {
+
+    }
+
+    public interface UncheckedValuesExtractor<T> {
+        void extract(@NotNull Class<?> itemClass, @Nullable T item, @NotNull ValueExtractingMatcherForExtending.UncheckedValuesAdder adder);
+    }
+
+    @NotNull
     public Class<?> getActualItemClass() {
-        return tClass;
+        return actualItemClass;
     }
-
 
     @Override
     public boolean matches(Object item) {
         lastReport = getReport(item);
         REPORTING_MATCHER_FLAG.set(true);
-        return lastReport.getStatus().isSuccesful();
+        return lastReport.getStatus().isSuccessful();
     }
 
     @Override
@@ -62,11 +77,11 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
             isRoot = true;
         }
         try {
-            if (tClass.isInstance(item)) {
-                runChecks((T) item, checkBuilder);
+            if (actualItemClass.isInstance(item)) {
+                runChecks(item.getClass(), (T) item, checkBuilder);
             } else {
-                checkBuilder.runMatcher(isA(tClass));
-                runChecks(null, checkBuilder);
+                checkBuilder.runMatcher(isA(actualItemClass));
+                runChecks(actualItemClass, null, checkBuilder);
             }
         } finally {
             if (isRoot) {
@@ -78,7 +93,7 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
     }
 
 
-    protected abstract void runChecks(@Nullable T item, ExecutedCompositeCheckBuilder checker);
+    protected abstract void runChecks(@NotNull Class<?> itemClass, @Nullable T item, ExecutedCompositeCheckBuilder checker);
 
 
     public interface ExecutedCheck {
@@ -92,14 +107,14 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
             BROKEN(false),   // кто-то бросил исключение
             ;
 
-            private final boolean succesful;
+            private final boolean successful;
 
-            Status(boolean succesful) {
-                this.succesful = succesful;
+            Status(boolean successful) {
+                this.successful = successful;
             }
 
-            public boolean isSuccesful() {
-                return succesful;
+            public boolean isSuccessful() {
+                return successful;
             }
         }
     }
@@ -107,7 +122,7 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
     /**
      * Хранит информацию о запуске обычного Matcher'а
      */
-    public static class ExecutedSimpleCheck implements ExecutedCheck {
+    public static final class ExecutedSimpleCheck implements ExecutedCheck {
         @NotNull private final String matcherDescription;
         @Nullable private final String mismatchDescription;
         @Nullable private final Exception matchesException;
@@ -221,7 +236,7 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
          * @return результаты запуска матчеров на проверяемом значении
          */
         @NotNull
-        public List<? extends ExecutedSimpleCheck> getSimpleChecks() {
+        public List<ExecutedSimpleCheck> getSimpleChecks() {
             return simpleChecks == null ? Collections.<ExecutedSimpleCheck>emptyList() : simpleChecks;
         }
 
@@ -248,7 +263,7 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
             boolean hasBroken = false;
             if (simpleChecks != null) {
                 // TODO: trimToSize?
-                for (ExecutedSimpleCheck simpleCheck : simpleChecks) {
+                for (ExecutedCheck simpleCheck : simpleChecks) {
                     if (simpleCheck.getStatus() == PASSED) hasPassed = true;
                     if (simpleCheck.getStatus() == FAILED) hasFailed = true;
                     if (simpleCheck.getStatus() == BROKEN) hasBroken = true;
@@ -342,17 +357,6 @@ public abstract class ReportingMatcher<T> extends BaseMatcher<T> {
         }
     }
 
-
-    private static Class<?> findClassOfT(Class<?> thisClass) {
-        for (Class<?> clazz = thisClass; clazz != Object.class; clazz = clazz.getSuperclass()) {
-            for (Method method : clazz.getDeclaredMethods()) {
-                if ("runChecks".equals(method.getName()) && method.getParameterTypes().length == 2 && !method.isSynthetic()) {
-                    return method.getParameterTypes()[0];
-                }
-            }
-        }
-        throw new Error("Cannot determine class of T from runChecks method");
-    }
 
     // Все ReportingMatcher'ы устанавливают этот флаг в true в конце matches
     // Нужно чтобы ReportingMatcher мог определить является ли вложенный матчер ReportingMatcher'ом
