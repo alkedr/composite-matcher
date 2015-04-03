@@ -1,12 +1,12 @@
 package com.github.alkedr.matchers.reporting;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class PlanningMatcher<T> extends PlanningMatcherForExtending<T, PlanningMatcher<T>> {
-    public PlanningMatcher() {
-    }
+public interface PlanningMatcher<T> extends ReportingMatcher<T> {
+    PlanningMatcher<T> addPlannedCheck(PlannedCheck plannedCheck);
 
-    public PlanningMatcher(@NotNull Class<T> tClass) {
-        super(tClass);
+    interface PlannedCheck<T> {
+        boolean matches(@Nullable Object item, @NotNull CheckListener listener);
     }
 }

@@ -1,25 +1,11 @@
 package com.github.alkedr.matchers.reporting;
 
-import com.github.alkedr.matchers.reporting.ifaces.ReportingMatcherForImplementing.Check;
-import com.github.alkedr.matchers.reporting.ifaces.ReportingMatcherForImplementing.CompositeCheck;
-import com.github.alkedr.matchers.reporting.ifaces.ReportingMatcherForImplementing.CompositeCheck.ExtractionStatus;
-import org.hamcrest.FeatureMatcher;
-import org.hamcrest.Matcher;
-
-import java.util.Collection;
-
-import static com.github.alkedr.matchers.reporting.ifaces.ReportingMatcherForImplementing.Check.Status.*;
-import static com.github.alkedr.matchers.reporting.ifaces.ReportingMatcherForImplementing.CompositeCheck.ExtractionStatus.NORMAL;
-import static com.github.alkedr.matchers.reporting.ifaces.ReportingMatcherForImplementing.SimpleCheck;
-import static java.util.Arrays.asList;
-import static org.hamcrest.Matchers.*;
-
 /**
  * User: alkedr
  * Date: 05.02.2015
  */
 public final class ReportMatchers {
-    private ReportMatchers() {
+    /*private ReportMatchers() {
     }
 
     public static Matcher<? super SimpleCheck> simpleCheck(Matcher<Check.Status> statusMatcher, Matcher<String> matcherDescriptionMatcher, Matcher<String> mismatchDescriptionMatcher) {
@@ -127,7 +113,7 @@ public final class ReportMatchers {
         return compositeCheck(FAILED, name, value, NORMAL, nullValue(Exception.class), checksMatchers);
     }
 
-
+*/
 
 
 

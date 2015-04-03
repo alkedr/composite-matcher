@@ -1,27 +1,23 @@
 package com.github.alkedr.matchers.reporting;
 
-import com.github.alkedr.matchers.reporting.impl.ClassifyingMatcher;
-import com.github.alkedr.matchers.reporting.reporters.HtmlReporter;
-import com.github.alkedr.matchers.reporting.reporters.HtmlWithJsonReporter;
+import com.github.alkedr.matchers.reporting.old.ObjectMatcher;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-import static org.hamcrest.Matchers.any;
 import static org.hamcrest.Matchers.equalTo;
 
 @SuppressWarnings("JUnitTestMethodWithNoAssertions")
 public class HtmlReporterTest {
-    @Test
-    public void fastReportsTest() throws IOException {
-        try (FileWriter fileWriter = new FileWriter("example-report.html")) {
-            fileWriter.write(new HtmlReporter().report(veryComplexBeanMatcher().getReport(new VeryComplexBean())));
-        }
-    }
+//    @Test
+//    public void fastReportsTest() throws IOException {
+//        try (FileWriter fileWriter = new FileWriter("example-report.html")) {
+//            fileWriter.write(new HtmlReporter().report(veryComplexBeanMatcher().getReport(new VeryComplexBean())));
+//        }
+//    }
 
     @Test
     public void memoryTest() throws IOException {
@@ -32,16 +28,16 @@ public class HtmlReporterTest {
         }
         System.out.println("strings are generated");
         System.gc();
-        ReportingMatcher.ExecutedCompositeCheck report = new ClassifyingMatcher().items(any(String.class), 1000000).getReport(strings);
+//        ReportingMatcher.ExecutedCompositeCheck report = new ClassifyingMatcher().items(any(String.class), 1000000).getReport(strings);
         System.out.println("report is built");
         System.gc();
-        String s = new HtmlWithJsonReporter().report(report);
-        System.out.println("html size " + s.length());
+//        String s = new HtmlWithJsonReporter().report(report);
+//        System.out.println("html size " + s.length());
         System.gc();
 
-        try (FileWriter fileWriter = new FileWriter("example-report.html")) {
-            fileWriter.write(new HtmlWithJsonReporter().report(report));
-        }
+//        try (FileWriter fileWriter = new FileWriter("example-report.html")) {
+//            fileWriter.write(new HtmlWithJsonReporter().report(report));
+//        }
     }
 
 
@@ -51,13 +47,13 @@ public class HtmlReporterTest {
 
 
 
-    private static ReportingMatcher<VeryComplexBean> veryComplexBeanMatcher() {
-        return new ObjectMatcher<>(VeryComplexBean.class)
-                .field("correctField").is(correctComplexBean())
-                .field("incorrectField").is(incorrectComplexBean())
-                .field("uncheckedField").is(correctComplexBean())
-                ;
-    }
+//    private static ReportingMatcher<VeryComplexBean> veryComplexBeanMatcher() {
+//        return new ObjectMatcher<>(VeryComplexBean.class)
+//                .field("correctField").is(correctComplexBean())
+//                .field("incorrectField").is(incorrectComplexBean())
+//                .field("uncheckedField").is(correctComplexBean())
+//                ;
+//    }
 
     private static Matcher<ComplexBean> correctComplexBean() {
         return complexBean("3");
